@@ -1,0 +1,6 @@
+{% extends 'base.html' %} {% block content %}
+<h2>{% block title %} {{ event['summary'] }} {% endblock %}</h2>
+<span class="badge badge-primary">{{ event['dt_start'] }}</span>
+<span class="badge badge-primary">{{ event['dt_end'] }}</span>
+<p>{{ event['content'] }}</p>
+{% endblock %}

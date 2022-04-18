@@ -1,0 +1,89 @@
+#calendar {
+  margin: 2rem;
+  display: grid;
+  grid-template-columns: max-content;
+  grid-template-rows: max-content;
+  grid-gap: 10px;
+  height: 1000px;
+  width: auto;
+}
+
+.timeline {
+  grid-column: 1;
+  grid-row: 2;
+  width: min-content;
+  height: auto;
+  display: grid;
+}
+
+.time-marker {
+  height: max-content;
+  position: relative;
+  top: -15%;
+}
+
+.dateline {
+  grid-column: 2;
+  grid-row: 1;
+  column-count: 7;
+  height: min-content;
+  width: 100%;
+}
+
+.timegrid {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: grid;
+}
+
+.gridcase {
+  display: block;
+  border-top: 0.5px solid rgb(95, 95, 95);
+  border-left: 0.5px solid rgb(95, 95, 95);
+}
+
+.weekday-marker {
+  display: block;
+}
+
+.days {
+  grid-column: 2;
+  grid-row: 2;
+  grid-gap: 0;
+  column-count: 7;
+  height: 100%;
+  width: 100%;
+  display: inline;
+}
+
+.day {
+  display: block;
+  height: 100%;
+}
+
+.events {
+  height: 100%;
+  width: 100%;
+  min-width: 100px;
+  display: flexbox;
+  position: relative;
+}
+
+.event {
+  display: block;
+  position: absolute;
+  right: 10px;
+  left: 0px;
+  border-radius: 6px;
+  background: rgb(137, 146, 156);
+  box-shadow: 0 0 5px rgb(0, 0, 0);
+}
+
+.title {
+  margin: 0 4px 0;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}

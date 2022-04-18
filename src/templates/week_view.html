@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+<h1>{% block title %} Replica Projet {% endblock %}</h1>
+{% block main_content %}
+<link rel="stylesheet" href="../static/css/calendar.css">
+<button id="previous-week-bt"><</button>
+<button id="next-week-bt">></button>
+<div id="calendar">
+</div>
+<script type="text/javascript"  src="{{ url_for('static', filename= 'js/script.js') }}"></script>
+{% endblock %}
+{% block left_side %}
+<div id="calendar-list">
+    <div class="calendar-item hidden" id="0">
+        <input class="calendar-checkbox" type="checkbox" checked="checked" />
+        <p></p>
+        <div class="calendar-settings-btn">
+        </div>
+    </div>
+    <div class="hidden" id="color-picker" style="display: none"></div>
+</div>
+{% endblock %}

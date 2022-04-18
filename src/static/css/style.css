@@ -1,0 +1,72 @@
+:root {
+    --overlay-depth: 1;
+}
+
+body {
+    display: grid;
+    grid-template-columns: max-content;
+}
+
+.left-side {
+    grid-column: 1;
+    width: auto;
+}
+
+.main-content {
+    grid-column: 2;
+}
+
+.calendar-item * {
+    display: inline-block;
+}
+
+.calendar-checkbox {
+    font: inherit;
+    color: currentColor;
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid black;
+    border-radius: 0.15em;
+}
+
+.calendar-settings-btn {
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid black;
+    border-radius: 0.15em;
+    background-color: aliceblue;
+}
+
+#color-picker {
+    width: 130px;
+    background: #F3F3F3;
+    height: 81px;
+    padding: 5px;
+    border: 5px solid #fff;
+    box-shadow: 0px 0px 3px 1px #DDD;
+    position: absolute;
+    top: 61px;
+    left: 2px;
+    z-index: var(--overlay-depth);
+}
+
+#color-picker .color-item {
+    cursor: pointer;
+    width: 10px;
+    height: 10px;
+    list-style-type: none;
+    float: left;
+    margin: 2px;
+    border: 1px solid #DDD;
+}
+
+#color-picker .color-item:hover {
+    border: 1px solid #666;
+    opacity: 0.8;
+    -moz-opacity: 0.8;
+    filter:alpha(opacity=8);
+}
+
+.hidden {
+    display: none;
+}
