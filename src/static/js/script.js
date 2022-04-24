@@ -53,8 +53,8 @@ calendar.appendChild(days);
 
 
 var day = new Date(today.getTime());
-if (today.getDay() != 1) {
-    day.setDate(today.getDate() - today.getDay() + 1);
+if (day.getDay() != 1) {
+    day.setDate(day.getDate() - ((day.getDay()+6)%7));
 }
 var start_day = new Date(day.getTime());
 start_day.setHours(0);
