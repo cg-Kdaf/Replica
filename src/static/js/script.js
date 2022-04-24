@@ -57,12 +57,15 @@ if (today.getDay() != 1) {
     day.setDate(today.getDate() - today.getDay() + 1);
 }
 var start_day = new Date(day.getTime());
+start_day.setHours(0);
+start_day.setMinutes(0);
+start_day.setMilliseconds(0);
 var days_streak = 7;
 
 
 var dates = document.getElementsByClassName("weekday-marker");
-var day = new Date(start_day.getTime());
 function update_dateline() {
+    var day = new Date(start_day.getTime());
     for (var i = 0; i < dates.length; i++) {
         dates[i].innerHTML = dates[i].innerHTML.slice(0, 4) + day.getDate();
         day.setDate(day.getDate() + 1);
@@ -93,10 +96,9 @@ function draw_events(events_list) {
     for (var i = 0; i < days.length; i++) {
         days[i].innerHTML="";
     }
-    var days_filled_ratio = [0] * days.length;
     for (var i = 0; i < events_list.length; i++) {
-        event_ = events_list[i];
-        var event_color = 'var(--calendar-color-'+calendars[event_["cal_id"]]["id"].toLocaleString()+")";
+        var event_ = events_list[i];
+        var event_color = 'var(--calendar-color-'+event_["cal_id"].toLocaleString()+")";
         var start = new Date(event_["dt_start"]);
         var end = new Date(event_["dt_end"]);
         var day = (start.getDay()+6)%7;
@@ -114,6 +116,7 @@ function draw_events(events_list) {
         event_elt.style.backgroundColor = event_color;
         days[day].appendChild(event_elt);
     }
+    update_events_visibility();
 }
 
 socket.on('json', function(event) {
@@ -146,6 +149,13 @@ previous_button.onclick = function() {
     request_events();
 };
 
+var refresh_cal_button = document.getElementById("refresh-calendars");
+
+refresh_cal_button.onclick = function() {
+    socket.emit('refresh_calendars', "");
+};
+
+
 function remove_child_except_hidden(node, class_name) {
     for (var i = 0; i < node.children.length; i++) {
         var className = node.children[i].className;
@@ -155,31 +165,45 @@ function remove_child_except_hidden(node, class_name) {
     }
 }
 
-function update_cal_visibility() {
-    var checked = this.checked;
-    var cal_id = (this.parentNode.id -1).toLocaleString();
+function update_events_visibility() {
+    var cals_by_id = {};
+    for (var i=0;i<calendars.length; i++) {
+        cals_by_id[calendars[i]["id"]] = calendars[i];
+    }
     var events = document.getElementsByClassName("event");
-    if (checked) {
-        for (var i = 0; i < events.length; i++) {
-            if (events[i].dataset.cal_id === cal_id)
-            {
-                events[i].style.display = "block";
-            }
-        }
-    } else {
-        for (var i = 0; i < events.length; i++) {
-            if (events[i].dataset.cal_id === cal_id)
-            {
-                events[i].style.display = "none";
-            }
+    for (var i = 0; i < events.length; i++) {
+        var cal = cals_by_id[events[i].dataset.cal_id]
+        if (cal["shown"] == 1 && cal["activated"] == 1)
+        {
+            events[i].style.display = "block";
+        } else {
+            events[i].style.display = "none";
         }
     }
+}
+
+function update_cal_visibility() {
+    var cals_by_id = {};
+    for (var i=0;i<calendars.length; i++) {
+        cals_by_id[calendars[i]["id"]] = calendars[i];
+    }
+    var checked = this.checked;
+    var cal_id = this.parentNode.id.toLocaleString();
+    if (checked) {
+        cals_by_id[cal_id]["shown"] = 1;
+    } else {
+        cals_by_id[cal_id]["shown"] = 0;
+    }
+    update_events_visibility();
+    socket.emit('set_cal_visibility', cal_id.toLocaleString()+" "+checked.toLocaleString());
 }
 
 // Colors
 
 var colorList = [ '000000', '993300', '333300', '003300', '003366', '000066', '333399', '333333', 
 '660000', 'FF6633', '666633', '336633', '336666', '0066FF', '666699', '666666', 'CC3333', 'FF9933', '99CC33', '669966', '66CCCC', '3366FF', '663366', '999999', 'CC66FF', 'FFCC33', 'FFFF66', '99FF66', '99CCCC', '66CCFF', '993366', 'CCCCCC', 'FF99CC', 'FFCC99', 'FFFF99', 'CCffCC', 'CCFFff', '99CCFF', 'CC99FF', 'FFFFFF' ];
+var settings_panel = document.getElementById('calendar-settings');
+var settings_desactivate_btn = document.getElementById('desactivate-cal-btn');
 var picker = document.getElementById('color-picker');
 var callpicker;
 function send_color(cal_id, color) {
@@ -199,7 +223,19 @@ for (var i = 0; i < color_items.length; i++ ) {
 }
 
 document.body.onclick = function () {
-    picker.style.display = "none";
+    settings_panel.style.display = "none";
+};
+
+settings_desactivate_btn.onclick = function () {
+    var cal_id = callpicker.parentNode.id.toLocaleString();
+    var cals_by_id = {};
+    for (var i=0;i<calendars.length; i++) {
+        cals_by_id[calendars[i]["id"]] = calendars[i];
+    }
+    cals_by_id[cal_id]["activated"] = 0;
+    socket.emit('set_cal_activation', cal_id+" false");
+    update_events_visibility();
+    update_calendar_list();
 };
 
 
@@ -215,22 +251,26 @@ function update_calendar_list() {
         var cal_elt = cal_elt_template.cloneNode(deep=true);
         cal_elt.className = "calendar-item";
         cal_elt.id = cal["id"];
+        if (cal["activated"] == 0) {
+            cal_elt.style.display = "none";
+        }
         var checkbox = cal_elt.children[0];
         checkbox.onchange = update_cal_visibility;
+        checkbox.checked = cal["shown"];
         var event_color = 'var('+color_var_name+")";
         checkbox.style.accentColor = event_color;
         checkbox.style.backgroundColor = event_color;
         var title = cal_elt.children[1];
-        title.innerHTML = cal["title"];
+        title.innerHTML = cal["title"].substring(0, 30);
 
         var settings = cal_elt.children[2];
         settings.onclick = function(event) {
             callpicker = this;
             event.stopPropagation();
-            picker.style.display = "block";
+            settings_panel.style.display = "block";
             var actual_pos = this.getBoundingClientRect();
-            picker.style.top = actual_pos.top.toLocaleString() + "px";
-            picker.style.left = (actual_pos.right).toLocaleString() + "px";
+            settings_panel.style.top = actual_pos.top.toLocaleString() + "px";
+            settings_panel.style.left = (actual_pos.right).toLocaleString() + "px";
         };
         calendar_list.appendChild(cal_elt);
     }

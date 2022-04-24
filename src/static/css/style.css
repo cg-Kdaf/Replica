@@ -16,8 +16,14 @@ body {
     grid-column: 2;
 }
 
+.calendar-item {
+    display: grid;
+    grid-template-columns: min-content;
+}
+
 .calendar-item * {
-    display: inline-block;
+    grid-row: 1;
+    align-self: center;
 }
 
 .calendar-checkbox {
@@ -29,7 +35,14 @@ body {
     border-radius: 0.15em;
 }
 
+.calendar-item p {
+    width: max-content;
+    text-align: left;
+    margin: 0.3rem;
+}
+
 .calendar-settings-btn {
+    justify-self: right;
     width: 1.15em;
     height: 1.15em;
     border: 0.15em solid black;
@@ -37,25 +50,28 @@ body {
     background-color: aliceblue;
 }
 
-#color-picker {
-    width: 130px;
-    background: #F3F3F3;
-    height: 81px;
-    padding: 5px;
-    border: 5px solid #fff;
-    box-shadow: 0px 0px 3px 1px #DDD;
+#calendar-settings {
     position: absolute;
-    top: 61px;
-    left: 2px;
     z-index: var(--overlay-depth);
+    background: #515151;
+    border-radius: 0.2rem;
+}
+
+#color-picker {
+    background: #000000;
+    border: 0.2rem solid #000000;
+    border-radius: 0.3rem;
+    display: grid;
+    grid-template-columns: repeat(8, min-content);
+    grid-auto-rows: min-content;
+    margin: 0.5rem;
 }
 
 #color-picker .color-item {
     cursor: pointer;
-    width: 10px;
-    height: 10px;
+    width: 0.8rem;
+    height: 0.8rem;
     list-style-type: none;
-    float: left;
     margin: 2px;
     border: 1px solid #DDD;
 }

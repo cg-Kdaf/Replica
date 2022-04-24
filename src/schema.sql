@@ -4,17 +4,23 @@ DROP TABLE IF EXISTS calendars;
 
 CREATE TABLE calendars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    color TEXT,
-    title TEXT NOT NULL
+    color TEXT NOT NULL DEFAULT "rgb(200, 200, 200)",
+    external_id TEXT,
+    title TEXT NOT NULL,
+    original_title TEXT,
+    activated BOOLEAN NOT NULL DEFAULT 1,
+    shown BOOLEAN NOT NULL DEFAULT 1
 );
 
 CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     cal_id INTEGER,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    dt_start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    dt_end TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    summary TEXT NOT NULL,
+    updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dt_start TIMESTAMP NOT NULL,
+    dt_end TIMESTAMP,
+    summary TEXT,
     content TEXT,
-    FOREIGN KEY(cal_id) REFERENCES calendars(id)
+    recurrence TEXT,
+    FOREIGN KEY(cal_id) REFERENCES calendars(id) ON DELETE CASCADE
 );

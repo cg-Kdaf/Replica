@@ -1,8 +1,11 @@
 {% extends 'base.html' %} {% block main_content %}
 <h1>{% block title %} Manage calendars {% endblock %}</h1>
 {% for cal_elt in cal_elts %}
-<p>{{ cal_elt['title'] }}</p>
-<div class="color-holder call-picker" data-id="{{ cal_elt['id'] }}" style="background-color: {{ cal_elt['color'] }}"></div>
+<div id="calendar-list-{{ cal_elt['id'] }}">
+    <p>{{ cal_elt['title'] }}</p>
+    <div class="color-holder call-picker" data-id="{{ cal_elt['id'] }}" style="background-color: {{ cal_elt['color'] }}"></div>
+    <button class="restore-cal-button">Restore calendar</button>
+</div>
 <hr> {% endfor %}
 <div class="color-picker" id="color-picker" style="display: none"></div>
 <script type="text/javascript"  src="{{ url_for('static', filename= 'js/color_picker.js') }}"></script>

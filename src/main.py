@@ -1,10 +1,19 @@
+import random
 import sqlite3
+import string
 from flask import Flask, render_template, request, url_for, flash, redirect
 from datetime import datetime, timedelta
 from flask_socketio import SocketIO, send
+from external_services.google import google_auth, google_calendar
+from external_services.strava import strava_auth, strava_activities
+from utils import select_to_dict_list
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your secret key'
+app.secret_key = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+print(app.secret_key)
+
+app.register_blueprint(google_auth.app)
+app.register_blueprint(strava_auth.app)
 socketio = SocketIO(app)
 
 
@@ -72,28 +81,18 @@ def event(event_id):
     return render_template('event.html', event=event)
 
 
-def select_to_dict_list(selection):
-    list_ = []
-    if len(selection) == 0:
-        return list_
-    keys = selection[0].keys()
-    for row in selection:
-        list_.append({key: row[key] for key in keys})
-    return list_
-
-
 @socketio.on('get_events')
 def get_events(data):
     start_day = datetime.fromtimestamp(int(data.split(" ")[0].replace(",", ""))/1000.0)
     conn = get_db_connection()
-    day_start = start_day.strftime('%Y-%m-%d 00:00:00')
-    day_end = (start_day+timedelta(days=int(data.split(" ")[1]))).strftime('%Y-%m-%d 00:00:00')
-    request = f"SELECT * FROM events WHERE dt_start > '{day_start}' AND dt_start < '{day_end}'  ORDER BY dt_start"
+    day_start = start_day.strftime('%Y-%m-%d')
+    day_end = (start_day+timedelta(days=int(data.split(" ")[1]))).strftime('%Y-%m-%d')
+    request = "SELECT * FROM events"
+    request += f" WHERE dt_start >= '{day_start}' AND dt_start < '{day_end}'  ORDER BY dt_start"
     events = conn.execute(request).fetchall()
     conn.close()
     events = select_to_dict_list(events)
     send_message("events", events)
-
 
 @socketio.on('get_calendars')
 def get_calendars(data):
@@ -114,6 +113,36 @@ def set_cal_color(data):
     conn.execute(request).fetchall()
     conn.commit()
     conn.close()
+
+
+@socketio.on('set_cal_visibility')
+def set_cal_visibility(data):
+    cal_id = data.split(" ")[0]
+    visibility = "1" if "".join(data.split(" ")[1:]) == "true" else "0"
+    conn = get_db_connection()
+    request = f"UPDATE calendars SET shown = '{visibility}' WHERE id = {cal_id}"
+    conn.execute(request).fetchall()
+    conn.commit()
+    conn.close()
+
+
+@socketio.on('set_cal_activation')
+def set_cal_activation(data):
+    cal_id = data.split(" ")[0]
+    activated = "1" if "".join(data.split(" ")[1:]) == "true" else "0"
+    conn = get_db_connection()
+    request = f"UPDATE calendars SET activated = '{activated}' WHERE id = {cal_id}"
+    conn.execute(request).fetchall()
+    conn.commit()
+    conn.close()
+
+
+@socketio.on('refresh_calendars')
+def refresh_calendars(data):
+    if google_auth.is_logged_in():
+        google_calendar.store_calendars()
+    if strava_auth.is_logged_in():
+        strava_activities.store_activities_in_calendars()
 
 
 if __name__ == '__main__':

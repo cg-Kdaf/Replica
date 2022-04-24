@@ -33,3 +33,12 @@ for (var i = 0; i < callpickers.length; i++ ) {
         picker.style.left = (actual_pos.right).toLocaleString() + "px";
     };
 }
+
+
+var restoring_btn = document.getElementsByClassName('restore-cal-button');
+for (var i = 0; i < restoring_btn.length; i++ ) {
+    restoring_btn[i].onclick = function() {
+        cal_id = this.parentElement.id.split("-")[2];
+        socket.emit('set_cal_activation', cal_id.toLocaleString()+" true");
+    };
+}
