@@ -1,8 +1,10 @@
+from datetime import datetime
 import functools
-from http import client
 import flask
 from authlib.integrations.requests_client import OAuth2Session
 from requests import request
+
+from utils import get_key
 from ..common import get_credentials, store_credentials, get_service_keys, AUTH_STATE_KEY, AUTH_TOKEN_KEY
 
 ACCESS_TOKEN_URI = 'https://www.strava.com/oauth/token'
@@ -21,7 +23,27 @@ app = flask.Blueprint(SERVICE_NAME, __name__)
 
 
 def is_logged_in():
-    return True if AUTH_TOKEN_KEY in get_credentials(SERVICE_NAME).keys() else False
+    creds = get_credentials(SERVICE_NAME)
+    expiration_time = get_key(creds, 'expires_at')
+    if AUTH_TOKEN_KEY not in creds.keys():
+        return False
+    if expiration_time < str(int(datetime.now().timestamp())):
+        if "refresh_token" in creds[AUTH_TOKEN_KEY].keys():
+            refresh_token = creds[AUTH_TOKEN_KEY]["refresh_token"]
+            app_keys = get_service_keys(SERVICE_NAME)
+            session = OAuth2Session(app_keys["client_id"], app_keys["client_secret"])
+
+            oauth2_tokens = session.fetch_access_token(ACCESS_TOKEN_URI,
+                                                       grant_type="refresh_token",
+                                                       refresh_token=refresh_token,
+                                                       client_id=app_keys["client_id"],
+                                                       client_secret=app_keys["client_secret"])
+            session_store = {AUTH_STATE_KEY: "",
+                             AUTH_TOKEN_KEY: oauth2_tokens}
+            store_credentials(SERVICE_NAME, session_store)
+            return True
+        return False
+    return True
 
 
 def build_credentials():
@@ -81,7 +103,7 @@ def google_auth_redirect():
                                                client_id=app_keys["client_id"],
                                                client_secret=app_keys["client_secret"])
 
-    session_store = {AUTH_STATE_KEY: session_get[AUTH_STATE_KEY],
+    session_store = {AUTH_STATE_KEY: "",
                      AUTH_TOKEN_KEY: oauth2_tokens}
     store_credentials(SERVICE_NAME, session_store)
 
