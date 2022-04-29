@@ -84,7 +84,7 @@ def event(event_id):
 
 @socketio.on('get_events')
 def get_events(data):
-    start_day = datetime.fromtimestamp(int(data.split(" ")[0].replace(",", ""))/1000.0, tz=pytz.UTC)
+    start_day = datetime.fromtimestamp(int(data.split(" ")[0].replace(",", ""))/1000.0)
     day_nb = int(data.split(" ")[1])
     conn = get_db_connection()
     day_start = start_day.strftime('%Y-%m-%d')

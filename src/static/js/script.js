@@ -1,6 +1,6 @@
 
 var calendars = [];
-var today = new Date();
+const today = new Date();
 const calendar = document.getElementById("calendar");
 var timeline = document.createElement("div");
 timeline.className = "timeline";
@@ -44,8 +44,10 @@ var events = document.createElement("div");
 events.className = "events";
 for (var i = 0; i < 7; i++) {
     var event_ = events.cloneNode(deep=true);
+
     days.appendChild(event_);
 }
+
 calendar.appendChild(dateline);
 calendar.appendChild(timeline);
 calendar.appendChild(time_grid);
@@ -92,10 +94,28 @@ function change_view_range(start_day_, days_streak_) {
     days_streak = days_streak_;
 }
 
+function remove_child_except_hidden(node, class_name) {
+    var elts = node.getElementsByClassName(class_name);
+    for (var i = 0; i < elts.length; i++) {
+        if (!elts[i].classList.contains('hidden')) {
+            elts[i].remove();
+        }
+    }
+}
+
 function draw_events(events_list) {
-    var days = document.getElementsByClassName("days")[0].childNodes;
+    var days = document.getElementsByClassName("days")[0].children;
+    var enddate = new Date();
+    enddate.setDate(start_day.getDate() + days_streak);
     for (var i = 0; i < days.length; i++) {
         days[i].innerHTML="";
+        if (start_day<today && today<enddate && (((today.getDay()+6)%7) == i)) {
+            var time_now = today.getHours() * 60 + today.getMinutes();
+            var cursor_now = document.createElement("div");
+            cursor_now.className = "cursor-now";
+            cursor_now.style.top = (time_now/1440*100).toLocaleString()+"%";
+            days[i].appendChild(cursor_now);
+        }
     }
     for (var i = 0; i < events_list.length; i++) {
         var event_ = events_list[i];
@@ -115,6 +135,10 @@ function draw_events(events_list) {
         event_elt.style.top = (time_start/1440*100).toLocaleString()+"%";
         event_elt.style.height = ((time_end-time_start)/1440*100).toLocaleString()+"%";
         event_elt.style.backgroundColor = event_color;
+        if (end.getTime() < today.getTime()) {
+            event_elt.style.boxShadow = "inset 0px 0px 0 2000px rgba(0,0,0,0.5)";
+            event_elt.style.color = "rgba(0,0,0,0.5)";
+        }
         days[day].appendChild(event_elt);
     }
     update_events_visibility();
@@ -155,16 +179,6 @@ var refresh_cal_button = document.getElementById("refresh-calendars");
 refresh_cal_button.onclick = function() {
     socket.emit('refresh_calendars', "");
 };
-
-
-function remove_child_except_hidden(node, class_name) {
-    for (var i = 0; i < node.children.length; i++) {
-        var className = node.children[i].className;
-        if (className.search("hidden") == -1 && className.search(class_name) != -1) {
-            node.removeChild(node.children[i]);
-        }
-    }
-}
 
 function update_events_visibility() {
     var cals_by_id = {};

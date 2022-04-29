@@ -83,6 +83,17 @@ body {
     filter:alpha(opacity=8);
 }
 
+.cursor-now {
+    display: block;
+    position: absolute;
+    height: 0.2rem;
+    width: 110%;
+    left: -5%;
+    border-radius: 0.2rem;
+    background-color: #ce0c0c;
+    z-index: var(--overlay-depth);
+}
+
 .hidden {
     display: none;
 }
