@@ -59,6 +59,7 @@ if (day.getDay() != 1) {
 var start_day = new Date(day.getTime());
 start_day.setHours(0);
 start_day.setMinutes(0);
+start_day.setSeconds(0);
 start_day.setMilliseconds(0);
 var days_streak = 7;
 

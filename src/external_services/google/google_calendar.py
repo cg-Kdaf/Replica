@@ -7,13 +7,11 @@ from utils import select_to_dict_list, generate_sql_datafields, get_key
 def get_calendar(calendar_id):
     cal_api = googleapiclient.discovery.build('calendar', 'v3', credentials=build_credentials())
     calendar_content = cal_api.events().list(calendarId=calendar_id,
-                                             singleEvents=True,
                                              maxResults=9999).execute()
     events = calendar_content["items"]
     while "nextPageToken" in calendar_content.keys():
         calendar_content = cal_api.events().list(calendarId=calendar_id,
                                                  pageToken=calendar_content["nextPageToken"],
-                                                 singleEvents=True,
                                                  maxResults=9999).execute()
         events = events + calendar_content["items"]
 
@@ -54,7 +52,8 @@ def store_calendars():
                     "dt_start": google_startend_datetime(get_key(event, 'start', {})),
                     "dt_end": google_startend_datetime(get_key(event, 'end', {})),
                     "summary": get_key(event, 'summary'),
-                    "content": get_key(event, 'description')
+                    "content": get_key(event, 'description'),
+                    "recurrence": "\n".join(get_key(event, 'recurrence'))
                 }
                 values, raw_datas = generate_sql_datafields(datas)
                 cur.execute("INSERT INTO events " + values, raw_datas)
