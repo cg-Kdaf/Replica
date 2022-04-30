@@ -37,3 +37,7 @@ def get_key(dict_, key, default=""):
         return dict_[key]
     else:
         return default
+
+
+def list_to_dict(list_of_dict, key):
+    return {dict_[key]: dict_ for dict_ in list_of_dict}

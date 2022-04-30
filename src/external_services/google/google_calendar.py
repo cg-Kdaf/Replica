@@ -1,19 +1,27 @@
+from datetime import datetime, timedelta, timezone
 import googleapiclient.discovery
 from .google_auth import build_credentials
 from ..common import get_database_connection
-from utils import select_to_dict_list, generate_sql_datafields, get_key
+from utils import list_to_dict, select_to_dict_list, generate_sql_datafields, get_key
 
 
-def get_calendar(calendar_id):
-    cal_api = googleapiclient.discovery.build('calendar', 'v3', credentials=build_credentials())
-    calendar_content = cal_api.events().list(calendarId=calendar_id,
-                                             maxResults=9999).execute()
-    events = calendar_content["items"]
-    while "nextPageToken" in calendar_content.keys():
+def get_calendar(cal_api, calendar_id, updated_min=None):
+    if updated_min:
+        arg = {"updatedMin": updated_min}
+    else:
+        arg = {}
+    events = []
+    page_token = None
+    while True:
         calendar_content = cal_api.events().list(calendarId=calendar_id,
-                                                 pageToken=calendar_content["nextPageToken"],
-                                                 maxResults=9999).execute()
-        events = events + calendar_content["items"]
+                                                 pageToken=page_token,
+                                                 maxResults=9999,
+                                                 showDeleted=True,
+                                                 **arg).execute()
+        events += calendar_content["items"]
+        page_token = get_key(calendar_content, "nextPageToken", None)
+        if not page_token:
+            break
 
     return events
 
@@ -27,35 +35,54 @@ def google_startend_datetime(date_time_dict):
     return whole_datetime
 
 
+def store_event(db_conn, event, cal_id):
+    datas = {
+        "cal_id": cal_id,
+        "original_id": get_key(event, "iCalUID", "NULL"),
+        "created": get_key(event, 'created'),
+        "updated": get_key(event, 'updated'),
+        "dt_start": google_startend_datetime(get_key(event, 'start', {})),
+        "dt_end": google_startend_datetime(get_key(event, 'end', {})),
+        "summary": get_key(event, 'summary'),
+        "content": get_key(event, 'description'),
+        "recurrence": "\n".join(get_key(event, 'recurrence')),
+        "deleted": "1" if get_key(event, 'status', "") == "cancelled" else "0"
+    }
+    values, raw_datas = generate_sql_datafields(datas)
+    db_conn.execute("REPLACE INTO events " + values, raw_datas)
+
+
 def store_calendars():
     conn = get_database_connection()
     cur = conn.cursor()
 
+    now_iso = datetime.now(timezone.utc).isoformat()
     existing_cals = select_to_dict_list(cur.execute("SELECT * FROM calendars").fetchall())
-    existing_ids = [cal["external_id"] for cal in existing_cals]
+    cals_by_id = list_to_dict(existing_cals, "external_id")
     cal_api = googleapiclient.discovery.build('calendar', 'v3', credentials=build_credentials())
-    calendar_list = cal_api.calendarList().list().execute()
+    calendar_list = cal_api.calendarList().list(showHidden=True).execute()
     for calendar in calendar_list["items"]:
-        if calendar["id"] not in existing_ids:
+        id_in_db = None
+        if calendar["id"] not in cals_by_id.keys():
             cur.execute("INSERT INTO calendars (external_id, title) VALUES (?, ?)", (calendar["id"], calendar["summary"]))
             existing_cals = select_to_dict_list(cur.execute("SELECT * FROM calendars").fetchall())
-            id_in_db = list(filter(lambda cal: cal["external_id"] == calendar["id"], existing_cals))
-            id_in_db = id_in_db[0]["id"]
-            events = get_calendar(calendar["id"])
+            cals_by_id = list_to_dict(existing_cals, "external_id")
+            id_in_db = cals_by_id[calendar["id"]]["id"]
+            events = get_calendar(cal_api, calendar["id"])
             for event in events:
                 if "recurringEventId" in event.keys():
                     continue
-                datas = {
-                    "cal_id": id_in_db,
-                    "created": get_key(event, 'created'),
-                    "updated": get_key(event, 'updated'),
-                    "dt_start": google_startend_datetime(get_key(event, 'start', {})),
-                    "dt_end": google_startend_datetime(get_key(event, 'end', {})),
-                    "summary": get_key(event, 'summary'),
-                    "content": get_key(event, 'description'),
-                    "recurrence": "\n".join(get_key(event, 'recurrence'))
-                }
-                values, raw_datas = generate_sql_datafields(datas)
-                cur.execute("INSERT INTO events " + values, raw_datas)
+                store_event(cur, event, id_in_db)
+        else:
+            id_in_db = cals_by_id[calendar["id"]]["id"]
+            last_time_updated = get_key(cals_by_id[calendar["id"]], "updated", None)
+            last_time_updated = datetime.fromisoformat(last_time_updated) - timedelta(minutes=30)
+            last_time_updated = last_time_updated.strftime("%Y-%m-%dT%H:%M:%SZ")
+            events = get_calendar(cal_api, calendar["id"], updated_min=last_time_updated)
+            for event in events:
+                if "recurringEventId" in event.keys():
+                    continue
+                store_event(cur, event, id_in_db)
+        cur.execute(f"UPDATE calendars SET updated = '{now_iso}' WHERE id = {id_in_db}").fetchall()
     conn.commit()
     conn.close()

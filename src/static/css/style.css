@@ -43,11 +43,17 @@ body {
 
 .calendar-settings-btn {
     justify-self: right;
+    display: block;
     width: 1.15em;
     height: 1.15em;
     border: 0.15em solid black;
-    border-radius: 0.15em;
+    border-radius: 100%;
     background-color: aliceblue;
+}
+
+.calendar-settings-btn:hover {
+    border-radius: 5%;
+    border: 0.15em solid rgb(57, 20, 226);
 }
 
 #calendar-settings {

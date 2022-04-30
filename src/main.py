@@ -8,7 +8,6 @@ from external_services.google import google_auth, google_calendar
 from external_services.strava import strava_auth, strava_activities
 from utils import select_to_dict_list
 from utils.calendar import get_recurring_events
-import pytz
 
 app = Flask(__name__)
 app.secret_key = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -89,10 +88,10 @@ def get_events(data):
     conn = get_db_connection()
     day_start = start_day.strftime('%Y-%m-%d')
     day_end = (start_day+timedelta(days=day_nb)).strftime('%Y-%m-%d')
-    request = "SELECT * FROM events"
-    request_ = f" WHERE dt_start >= '{day_start}' AND dt_start < '{day_end}'  ORDER BY dt_start"
+    request = "SELECT * FROM events WHERE deleted != 1 "
+    request_ = f"AND dt_start >= '{day_start}' AND dt_start < '{day_end}'  ORDER BY dt_start"
     non_recursive_events = conn.execute(request + request_).fetchall()
-    request_ = " WHERE (recurrence IS NOT NULL AND recurrence != '') ORDER BY dt_start"
+    request_ = "AND (recurrence IS NOT NULL AND recurrence != '') ORDER BY dt_start"
     recursive_events = conn.execute(request + request_).fetchall()
     conn.close()
     recursive_events = get_recurring_events(select_to_dict_list(recursive_events),
@@ -100,6 +99,7 @@ def get_events(data):
                                             (start_day+timedelta(days=day_nb)))
     events = select_to_dict_list(non_recursive_events+recursive_events)
     send_message("events", events)
+
 
 @socketio.on('get_calendars')
 def get_calendars(data):
