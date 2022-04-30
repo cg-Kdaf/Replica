@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from icalendar import Calendar, Event
 import recurring_ical_events
 import re
@@ -29,6 +29,7 @@ def str_date_or_datetime(time_str):
 
 def get_recurring_events(initiator_events, period_start, period_end):
     events_by_id = {event["id"]: event for event in initiator_events}
+    LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
     calendar = Calendar()
     instanced_events = []
     for event in initiator_events:
@@ -58,7 +59,7 @@ def get_recurring_events(initiator_events, period_start, period_end):
         end = event["dtend"].dt
         id = event["ID"]
         new_event = deepcopy(events_by_id[id])
-        new_event["dt_start"] = start.isoformat()
-        new_event["dt_end"] = end.isoformat()
+        new_event["dt_start"] = start.replace(tzinfo=LOCAL_TIMEZONE).isoformat()
+        new_event["dt_end"] = end.replace(tzinfo=LOCAL_TIMEZONE).isoformat()
         instanced_events.append(new_event)
     return instanced_events

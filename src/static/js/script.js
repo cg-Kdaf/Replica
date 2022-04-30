@@ -26,12 +26,23 @@ for (var i = 0; i < 7; i++) {
     dateline.appendChild(marker);
 }
 
+var multi_day_events = document.createElement("div");
+multi_day_events.className = "multiday-events";
+
+var day_grid = document.createElement("div");
+day_grid.className = "day-grid";
+var grid_case = document.createElement("div");
+grid_case.className = "gridcase";
+for (var i = 0; i < 7; i++) {
+    var grid_case_ = grid_case.cloneNode(deep=true);
+    grid_case_.style.gridColumn = i+1;
+    day_grid.appendChild(grid_case_);
+}
+
 var days = document.createElement("div");
 days.className = "days";
 var time_grid = document.createElement("div");
 time_grid.className = "timegrid";
-var grid_case = document.createElement("div");
-grid_case.className = "gridcase";
 for (var i = 0; i < 7; i++) {
     for (var j = 0; j < 24; j++) {
         var grid_case_ = grid_case.cloneNode(deep=true);
@@ -48,7 +59,9 @@ for (var i = 0; i < 7; i++) {
     days.appendChild(event_);
 }
 
+calendar.appendChild(day_grid);
 calendar.appendChild(dateline);
+calendar.appendChild(multi_day_events);
 calendar.appendChild(timeline);
 calendar.appendChild(time_grid);
 calendar.appendChild(days);
@@ -89,11 +102,6 @@ socket.on('message', function(event) {
     console.log(`Data received from server: ${event}`);
 });
 
-function change_view_range(start_day_, days_streak_) {
-    start_day = start_day_;
-    days_streak = days_streak_;
-}
-
 function remove_child_except_hidden(node, class_name) {
     var elts = node.getElementsByClassName(class_name);
     for (var i = 0; i < elts.length; i++) {
@@ -105,9 +113,11 @@ function remove_child_except_hidden(node, class_name) {
 
 function draw_events(events_list) {
     var days = document.getElementsByClassName("days")[0].children;
-    var enddate = new Date();
+    var multiday_events = document.getElementsByClassName("multiday-events")[0];
+    var enddate = new Date(start_day.getTime());
     enddate.setDate(start_day.getDate() + days_streak);
     for (var i = 0; i < days.length; i++) {
+        multiday_events.innerHTML="";
         days[i].innerHTML="";
         if (start_day<today && today<enddate && (((today.getDay()+6)%7) == i)) {
             var time_now = today.getHours() * 60 + today.getMinutes();
@@ -132,16 +142,42 @@ function draw_events(events_list) {
         event_title.className = "title";
         event_title.textContent = event_["summary"];
         event_elt.appendChild(event_title);
-        event_elt.style.top = (time_start/1440*100).toLocaleString()+"%";
-        event_elt.style.height = ((time_end-time_start)/1440*100).toLocaleString()+"%";
         event_elt.style.backgroundColor = event_color;
-        if (end.getTime() < today.getTime()) {
+        if (end < today) {
             event_elt.style.boxShadow = "inset 0px 0px 0 2000px rgba(0,0,0,0.5)";
             event_elt.style.color = "rgba(0,0,0,0.5)";
         }
+        if (start < start_day && end > enddate) {
+            event_elt.style.gridColumnStart = 1;
+            event_elt.style.gridColumnEnd = 8;
+            multiday_events.appendChild(event_elt);
+            continue;
+        }
+        if (start < start_day) {
+            event_elt.style.gridColumnStart = 1;
+            end.setMilliseconds(end.getMilliseconds()-1);
+            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
+            multiday_events.appendChild(event_elt);
+            continue;
+        }
+        if (end > enddate) {
+            event_elt.style.gridColumnStart = day+1;
+            event_elt.style.gridColumnEnd = 8;
+            multiday_events.appendChild(event_elt);
+            continue;
+        }
+        if ((time_start == 0) && (time_end == 0)) {
+            event_elt.style.gridColumnStart = day+1;
+            event_elt.style.gridColumnEnd = (end.getDay()+6)%7;
+            multiday_events.appendChild(event_elt);
+            continue;
+        }
+        event_elt.style.top = (time_start/1440*100).toLocaleString()+"%";
+        event_elt.style.height = ((end-start)/60000/1440*100).toLocaleString()+"%";
         days[day].appendChild(event_elt);
     }
     update_events_visibility();
+    update_dateline();
 }
 
 socket.on('json', function(event) {
