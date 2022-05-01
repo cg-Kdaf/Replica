@@ -179,7 +179,14 @@ function draw_events(events_list) {
         }
         if ((time_start == 0) && (time_end == 0)) {
             event_elt.style.gridColumnStart = day+1;
-            event_elt.style.gridColumnEnd = (end.getDay()+6)%7;
+            end.setMilliseconds(end.getMilliseconds()-1);
+            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
+            multiday_events.appendChild(event_elt);
+            continue;
+        }
+        if ((end.getTime() - start.getTime()) > (24*60*60*1000)) {
+            event_elt.style.gridColumnStart = day+1;
+            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
             multiday_events.appendChild(event_elt);
             continue;
         }
