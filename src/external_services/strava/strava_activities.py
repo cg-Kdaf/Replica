@@ -1,3 +1,4 @@
+import pytz
 import requests
 from .strava_auth import build_credentials
 from ..common import get_database_connection
@@ -38,7 +39,7 @@ def get_all_activities():
 def calc_end(start, duration_seconds):
     start = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S%z")
     start += timedelta(seconds=duration_seconds)
-    return start
+    return start.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def store_activities_in_calendars():
@@ -58,13 +59,15 @@ def store_activities_in_calendars():
         id_in_db = list(filter(lambda cal: cal["original_title"] == STRAVA_CAL_NAME, existing_cals))
         id_in_db = id_in_db[0]["id"]
         for activity in get_all_activities():
+            utc_offset = datetime.now(pytz.timezone(activity["timezone"][12:])).isoformat()[-6:]
             datas = {
                 "cal_id": id_in_db,
-                "dt_start": get_key(activity, "start_date_local"),
-                "dt_end": calc_end(activity["start_date_local"], activity["elapsed_time"]),
+                "dt_start": activity["start_date_local"][:-1] + utc_offset,
+                "dt_end": calc_end(activity["start_date_local"], activity["elapsed_time"]) + utc_offset,
                 "summary": get_key(activity, "name"),
                 "content": f"Distance : {get_key(activity, 'distance')}"
             }
+            print(datas)
             values, raw_datas = generate_sql_datafields(datas)
             cur.execute("INSERT INTO events " + values, raw_datas)
     conn.commit()

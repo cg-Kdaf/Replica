@@ -98,7 +98,7 @@ def get_events(data):
     recursive_events = get_recurring_events(select_to_dict_list(recursive_events),
                                             start_day,
                                             (start_day+timedelta(days=day_nb)))
-    events = select_to_dict_list(non_recursive_events+recursive_events)
+    events = sorted(select_to_dict_list(non_recursive_events+recursive_events), key=lambda d: d['dt_start'])
     send_message("events", events)
 
 

@@ -112,6 +112,10 @@ function remove_child_except_hidden(node, class_name) {
 }
 
 function draw_events(events_list) {
+    var cals_by_id = {};
+    for (var i=0;i<calendars.length; i++) {
+        cals_by_id[calendars[i]["id"]] = calendars[i];
+    }
     var days = document.getElementsByClassName("days")[0].children;
     var multiday_events = document.getElementsByClassName("multiday-events")[0];
     var enddate = new Date(start_day.getTime());
@@ -143,9 +147,16 @@ function draw_events(events_list) {
         event_title.textContent = event_["summary"];
         event_elt.appendChild(event_title);
         event_elt.style.backgroundColor = event_color;
+        var cal = cals_by_id[event_elt.dataset.cal_id]
+        if (cal["shown"] == 1 && cal["activated"] == 1)
+        {
+            event_elt.style.display = "block";
+        } else {
+            event_elt.style.display = "none";
+        }
         if (end < today) {
-            event_elt.style.boxShadow = "inset 0px 0px 0 2000px rgba(0,0,0,0.5)";
-            event_elt.style.color = "rgba(0,0,0,0.5)";
+            event_elt.style.boxShadow = "inset 0px 0px 0 2000px rgba(250,250,250,0.5)";
+            event_elt.style.color = "rgb(150,150,150)";
         }
         if (start < start_day && end > enddate) {
             event_elt.style.gridColumnStart = 1;
@@ -174,9 +185,24 @@ function draw_events(events_list) {
         }
         event_elt.style.top = (time_start/1440*100).toLocaleString()+"%";
         event_elt.style.height = ((end-start)/60000/1440*100).toLocaleString()+"%";
+        event_elt.style.marginLeft = "0%";
+        var event_start = parseInt(event_elt.style.top);
+        var event_end = event_start + parseInt(event_elt.style.height);
+        var other_events = days[day].getElementsByClassName("event");
+        for (var j = 0; j < other_events.length; j++) {
+            var j_event = other_events[j];
+            if (j_event.classList.contains('hidden')) {
+                continue;
+            }
+            var j_event_start = parseInt(j_event.style.top);
+            var j_event_end = j_event_start + parseInt(j_event.style.height);
+            if (j_event_start <= event_end && event_start <= j_event_end) {
+                event_elt.style.marginLeft = Math.max(parseInt(j_event.style.marginLeft) + 10,
+                parseInt(event_elt.style.marginLeft)).toLocaleString()+"%";
+            }
+        }
         days[day].appendChild(event_elt);
     }
-    update_events_visibility();
     update_dateline();
 }
 
