@@ -1,7 +1,10 @@
 
 var calendars = [];
+var events_by_id = {};
 const today = new Date();
 const calendar = document.getElementById("calendar");
+const event_details = document.getElementById("event-details");
+event_details.onclick = function(self) {self.stopPropagation();};
 var timeline = document.createElement("div");
 timeline.className = "timeline";
 var time_marker = document.createElement("div");
@@ -111,8 +114,41 @@ function remove_child_except_hidden(node, class_name) {
     }
 }
 
+function event_details_draw(self) {
+    var event_data = events_by_id[this.dataset.id];
+    self.stopPropagation();
+    event_details.style.display = "block";
+    var actual_pos = this.getBoundingClientRect();
+    var day = this.parentNode;
+    var days = day.parentNode;
+    var day_pos = day.getBoundingClientRect();
+    var days_pos = days.getBoundingClientRect();
+    if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
+        event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
+        event_details.style.right = "";
+    }else{
+        event_details.style.right = (window.innerWidth - day_pos.left).toLocaleString().replace(",", "") + "px";
+        event_details.style.left = "";
+    }
+    event_details.style.top = actual_pos.top.toLocaleString() + "px";
+    var infos = event_details.getElementsByClassName("event-informations")[0];
+    var summary = infos.getElementsByClassName("summary")[0];
+    var date = infos.getElementsByClassName("date")[0];
+    var description = infos.getElementsByClassName("description")[0];
+    summary.innerHTML = event_data['summary'];
+    var start = new Date(event_data["dt_start"]);
+    var end = new Date(event_data["dt_end"]);
+    if (start.getDate() == end.getDate()) {
+        date.innerHTML = start.toLocaleDateString("en-us", { weekday: 'long', month: 'long', day: 'numeric' }) + " - " + start.toLocaleTimeString("en-us", {hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleTimeString("en-us", {hour: 'numeric', minute:'2-digit'});
+    }else{
+        date.innerHTML = start.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'});
+    }
+    description.innerHTML = event_data['content'];
+}
+
 function draw_events(events_list) {
     var cals_by_id = {};
+    events_by_id = {};
     for (var i=0;i<calendars.length; i++) {
         cals_by_id[calendars[i]["id"]] = calendars[i];
     }
@@ -133,6 +169,7 @@ function draw_events(events_list) {
     }
     for (var i = 0; i < events_list.length; i++) {
         var event_ = events_list[i];
+        events_by_id[event_["id"]] = event_;
         var event_color = 'var(--calendar-color-'+event_["cal_id"].toLocaleString()+")";
         var start = new Date(event_["dt_start"]);
         var end = new Date(event_["dt_end"]);
@@ -142,6 +179,8 @@ function draw_events(events_list) {
         var event_elt = document.createElement("div");
         event_elt.className = "event";
         event_elt.dataset.cal_id = event_["cal_id"];
+        event_elt.dataset.id = event_["id"];
+        event_elt.onclick = event_details_draw;
         var event_title = document.createElement("p");
         event_title.className = "title";
         event_title.textContent = event_["summary"];
@@ -193,6 +232,7 @@ function draw_events(events_list) {
         event_elt.style.top = (time_start/1440*100).toLocaleString()+"%";
         event_elt.style.height = ((end-start)/60000/1440*100).toLocaleString()+"%";
         event_elt.style.marginLeft = "0%";
+        event_elt.style.borderLeft = "0";
         var event_start = parseInt(event_elt.style.top);
         var event_end = event_start + parseInt(event_elt.style.height);
         var other_events = days[day].getElementsByClassName("event");
@@ -206,6 +246,7 @@ function draw_events(events_list) {
             if (j_event_start <= event_end && event_start <= j_event_end) {
                 event_elt.style.marginLeft = Math.max(parseInt(j_event.style.marginLeft) + 10,
                 parseInt(event_elt.style.marginLeft)).toLocaleString()+"%";
+                event_elt.style.borderLeft = event_elt.style.border;
             }
         }
         days[day].appendChild(event_elt);
@@ -308,6 +349,7 @@ for (var i = 0; i < color_items.length; i++ ) {
 
 document.body.onclick = function () {
     settings_panel.style.display = "none";
+    event_details.style.display = "none";
 };
 
 settings_desactivate_btn.onclick = function () {

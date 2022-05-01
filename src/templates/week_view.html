@@ -2,9 +2,18 @@
 <h1>{% block title %} Replica Projet {% endblock %}</h1>
 {% block main_content %}
 <link rel="stylesheet" href="../static/css/calendar.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto">
 <button id="previous-week-bt"><</button>
 <button id="next-week-bt">></button>
 <div id="calendar">
+    <div id="event-details" class="hidden">
+        <div class="event-actions"></div>
+        <div class="event-informations">
+            <p class="summary"></p>
+            <p class="date"></p>
+            <p class="description"></p>
+        </div>
+    </div>
 </div>
 <script type="text/javascript"  src="{{ url_for('static', filename= 'js/script.js') }}"></script>
 {% endblock %}

@@ -1,10 +1,13 @@
 :root {
-    --overlay-depth: 1;
+    --event-depth: 1;
+    --highlighted-event-depth: 2;
+    --overlay-depth: 3;
 }
 
 body {
     display: grid;
     grid-template-columns: max-content;
+    font-family: "Roboto", Arial, sans-serif;
 }
 
 .left-side {

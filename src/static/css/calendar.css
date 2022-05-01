@@ -98,9 +98,16 @@
   margin-right: 10px;
   margin-left: 0%;
   border-radius: 6px;
+  border: 0.05rem solid rgb(255, 255, 255);
   background: rgb(137, 146, 156);
-  box-shadow: 0 0 5px rgb(0, 0, 0);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
+}
+
+.event:hover {
+  border-color: black;
+  box-shadow: 0 0 10px rgb(0, 0, 0);
+  z-index: var(--highlighted-event-depth);
 }
 
 .event .title {
@@ -117,6 +124,20 @@
   column-count: 7;
   grid-template-columns: repeat(7, calc(100% / 7));
   grid-auto-flow: column;
+}
+
+#event-details {
+  position: absolute;
+  z-index: var(--overlay-depth);
+  background-color: white;
+  transition: left 0.5s, right 0.5s, top 0.5s;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 0.6rem;
+}
+
+#event-details div p {
+  font-size: large;
 }
 
 .multiday-events .event {
