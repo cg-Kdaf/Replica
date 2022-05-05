@@ -118,19 +118,6 @@ function event_details_draw(self) {
     var event_data = events_by_id[this.dataset.id];
     self.stopPropagation();
     event_details.style.display = "block";
-    var actual_pos = this.getBoundingClientRect();
-    var day = this.parentNode;
-    var days = day.parentNode;
-    var day_pos = day.getBoundingClientRect();
-    var days_pos = days.getBoundingClientRect();
-    if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
-        event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
-        event_details.style.right = "";
-    }else{
-        event_details.style.right = (window.innerWidth - day_pos.left).toLocaleString().replace(",", "") + "px";
-        event_details.style.left = "";
-    }
-    event_details.style.top = actual_pos.top.toLocaleString() + "px";
     var infos = event_details.getElementsByClassName("event-informations")[0];
     var summary = infos.getElementsByClassName("summary")[0];
     var date = infos.getElementsByClassName("date")[0];
@@ -144,6 +131,18 @@ function event_details_draw(self) {
         date.innerHTML = start.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'});
     }
     description.innerHTML = event_data['content'];
+    var actual_pos = this.getBoundingClientRect();
+    var details_pos = event_details.getBoundingClientRect();
+    var day = this.parentNode;
+    var days = day.parentNode;
+    var day_pos = day.getBoundingClientRect();
+    var days_pos = days.getBoundingClientRect();
+    if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
+        event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
+    }else{
+        event_details.style.left = (day_pos.right - day_pos.width - details_pos.width).toLocaleString().replace(",", "") + "px";
+    }
+    event_details.style.top = actual_pos.top.toLocaleString() + "px";
 }
 
 function draw_events(events_list) {
