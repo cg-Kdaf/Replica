@@ -242,7 +242,7 @@ function draw_events(events_list) {
             }
             var j_event_start = parseInt(j_event.style.top);
             var j_event_end = j_event_start + parseInt(j_event.style.height);
-            if (j_event_start <= event_end && event_start <= j_event_end) {
+            if (j_event_start < event_end && event_start < j_event_end) {
                 event_elt.style.marginLeft = Math.max(parseInt(j_event.style.marginLeft) + 10,
                 parseInt(event_elt.style.marginLeft)).toLocaleString()+"%";
                 event_elt.style.borderLeft = event_elt.style.border;

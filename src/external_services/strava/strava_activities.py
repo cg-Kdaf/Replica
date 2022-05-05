@@ -67,7 +67,6 @@ def store_activities_in_calendars():
                 "summary": get_key(activity, "name"),
                 "content": f"Distance : {get_key(activity, 'distance')}"
             }
-            print(datas)
             values, raw_datas = generate_sql_datafields(datas)
             cur.execute("INSERT INTO events " + values, raw_datas)
     conn.commit()
