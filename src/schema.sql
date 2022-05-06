@@ -1,7 +1,3 @@
-DROP TABLE IF EXISTS events;
-DROP TABLE IF EXISTS calendars;
-
-
 CREATE TABLE calendars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     color TEXT NOT NULL DEFAULT "rgb(200, 200, 200)",
@@ -12,7 +8,6 @@ CREATE TABLE calendars (
     activated BOOLEAN NOT NULL DEFAULT 1,
     shown BOOLEAN NOT NULL DEFAULT 1
 );
-
 CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     original_id INTEGER UNIQUE, -- index used to refresh calendar. It's the service's event index
