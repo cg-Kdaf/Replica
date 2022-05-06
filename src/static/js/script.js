@@ -137,6 +137,10 @@ function event_details_draw(self) {
     var days = day.parentNode;
     var day_pos = day.getBoundingClientRect();
     var days_pos = days.getBoundingClientRect();
+    if (day.className == "multiday-events") {
+        days_pos = day_pos;
+        day_pos = actual_pos;
+    }
     if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
         event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
     }else{
