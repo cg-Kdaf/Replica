@@ -19,14 +19,19 @@
 {% endblock %}
 {% block left_side %}
 <div id="calendar-list">
+    <div class="calendar-list-header">
+        <p>Calendars</p>
+        <input class="calendar-list-view-desactivated" type="checkbox" />
+    </div>
     <div class="calendar-item hidden" id="0">
-        <input class="calendar-checkbox" type="checkbox" checked="checked" />
+        <input class="calendar-checkbox" type="checkbox" checked="checked"/>
         <p></p>
         <div class="calendar-settings-btn">
         </div>
     </div>
     <div class="hidden" id="calendar-settings" style="display: none">
         <button id="desactivate-cal-btn">X</button>
+        <input type="text" class="name" name="name" size="10">
         <div id="color-picker"></div>
     </div>
 </div>

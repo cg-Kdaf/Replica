@@ -136,6 +136,14 @@ def set_cal_activated(cal_id, activation):
     conn.close()
 
 
+def set_cal_title(cal_id, title):
+    conn = get_db_connection()
+    request = f"UPDATE calendars SET title = '{title}' WHERE id = {cal_id}"
+    conn.execute(request).fetchall()
+    conn.commit()
+    conn.close()
+
+
 def refresh_calendars():
     if google_auth.is_logged_in():
         google_calendar.store_calendars()
@@ -153,13 +161,13 @@ class SocketIONameSpace(Namespace):
         elif event_name.startswith("set_cal_"):
             prop = event_name.replace("set_cal_", "")
             cal_id = data.split(" ")[0]
-            data = "".join(data.split(" ")[1:])
+            data = " ".join(data.split(" ")[1:])
             if prop == "activated":
                 set_cal_activated(cal_id, data)
             elif prop == "shown":
                 set_cal_shown(cal_id, data)
             elif prop == "title":
-                pass
+                set_cal_title(cal_id, data)
             elif prop == "color":
                 set_cal_color(cal_id, data)
         elif event_name.startswith("get_cal_"):

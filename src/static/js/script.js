@@ -107,7 +107,8 @@ socket.on('message', function(event) {
 
 function remove_child_except_hidden(node, class_name) {
     var elts = node.getElementsByClassName(class_name);
-    for (var i = 0; i < elts.length; i++) {
+    var length = elts.length;
+    for (var i = length-1; i > 0; i--) {
         if (!elts[i].classList.contains('hidden')) {
             elts[i].remove();
         }
@@ -328,15 +329,24 @@ function update_cal_visibility() {
         cals_by_id[cal_id]["shown"] = 0;
     }
     update_events_visibility();
+    update_calendar_list();
     socket.emit('set_cal_shown', cal_id.toLocaleString()+" "+checked.toLocaleString());
 }
 
-// Colors
+var view_desactivated_btn = document.getElementsByClassName('calendar-list-view-desactivated')[0];
+var show_desactivated = false;
+
+view_desactivated_btn.onchange = function () {
+    show_desactivated = this.checked;
+    update_calendar_list();
+}
 
 var colorList = [ '000000', '993300', '333300', '003300', '003366', '000066', '333399', '333333', 
 '660000', 'FF6633', '666633', '336633', '336666', '0066FF', '666699', '666666', 'CC3333', 'FF9933', '99CC33', '669966', '66CCCC', '3366FF', '663366', '999999', 'CC66FF', 'FFCC33', 'FFFF66', '99FF66', '99CCCC', '66CCFF', '993366', 'CCCCCC', 'FF99CC', 'FFCC99', 'FFFF99', 'CCffCC', 'CCFFff', '99CCFF', 'CC99FF', 'FFFFFF' ];
 var settings_panel = document.getElementById('calendar-settings');
+settings_panel.onclick = function(self) {self.stopPropagation();};
 var settings_desactivate_btn = document.getElementById('desactivate-cal-btn');
+var settings_title_field = settings_panel.getElementsByClassName('name')[0];
 var picker = document.getElementById('color-picker');
 var callpicker;
 function send_color(cal_id, color) {
@@ -366,12 +376,26 @@ settings_desactivate_btn.onclick = function () {
     for (var i=0;i<calendars.length; i++) {
         cals_by_id[calendars[i]["id"]] = calendars[i];
     }
-    cals_by_id[cal_id]["activated"] = 0;
-    socket.emit('set_cal_activated', cal_id+" false");
+    if (cals_by_id[cal_id]["activated"]) {
+        cals_by_id[cal_id]["activated"] = 0;
+    } else {
+        cals_by_id[cal_id]["activated"] = 1;
+    }
+    socket.emit('set_cal_activated', cal_id+" "+cals_by_id[cal_id]["activated"].toLocaleString());
     update_events_visibility();
     update_calendar_list();
 };
 
+settings_title_field.onchange = function (self) {
+    var cal_id = callpicker.parentNode.id.toLocaleString();
+    var cals_by_id = {};
+    for (var i=0;i<calendars.length; i++) {
+        cals_by_id[calendars[i]["id"]] = calendars[i];
+    }
+    cals_by_id[cal_id]["title"] = self.target.value;
+    socket.emit('set_cal_title', cal_id+" "+self.target.value);
+    update_calendar_list();
+}
 
 function update_calendar_list() {
     var calendar_list = document.getElementById("calendar-list");
@@ -386,7 +410,11 @@ function update_calendar_list() {
         cal_elt.className = "calendar-item";
         cal_elt.id = cal["id"];
         if (cal["activated"] == 0) {
-            cal_elt.style.display = "none";
+            if (show_desactivated) {
+                cal_elt.style.backgroundColor = "rgba(150,150,150, 25)";
+            }else{
+                cal_elt.style.display = "none";
+            }
         }
         var checkbox = cal_elt.children[0];
         checkbox.onchange = update_cal_visibility;
@@ -403,6 +431,7 @@ function update_calendar_list() {
             event.stopPropagation();
             settings_panel.style.display = "block";
             var actual_pos = this.getBoundingClientRect();
+            settings_title_field.value = this.parentNode.children[1].innerHTML;
             settings_panel.style.top = actual_pos.top.toLocaleString() + "px";
             settings_panel.style.left = (actual_pos.right).toLocaleString() + "px";
         };
