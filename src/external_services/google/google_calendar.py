@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import googleapiclient.discovery
+from googleapiclient.errors import HttpError
 from .google_auth import build_credentials
 from ..common import get_database_connection
 from utils import list_to_dict, select_to_dict_list, generate_sql_datafields, get_key
@@ -78,11 +79,21 @@ def store_calendars():
             last_time_updated = get_key(cals_by_id[calendar["id"]], "updated", None)
             last_time_updated = datetime.fromisoformat(last_time_updated) - timedelta(minutes=30)
             last_time_updated = last_time_updated.strftime("%Y-%m-%dT%H:%M:%SZ")
-            events = get_calendar(cal_api, calendar["id"], updated_min=last_time_updated)
-            for event in events:
-                if "recurringEventId" in event.keys():
-                    continue
-                store_event(cur, event, id_in_db)
+            try:
+                events = get_calendar(cal_api, calendar["id"], updated_min=last_time_updated)
+                for event in events:
+                    if "recurringEventId" in event.keys():
+                        continue
+                    store_event(cur, event, id_in_db)
+            except HttpError as err:
+                if err.resp.status == 410:
+                    events = get_calendar(cal_api, calendar["id"])
+                    for event in events:
+                        if "recurringEventId" in event.keys():
+                            continue
+                        store_event(cur, event, id_in_db)
+                else:
+                    raise
         cur.execute(f"UPDATE calendars SET updated = '{now_iso}' WHERE id = {id_in_db}").fetchall()
     conn.commit()
     conn.close()
