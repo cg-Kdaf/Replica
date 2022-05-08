@@ -117,7 +117,6 @@ function remove_child_except_hidden(node, class_name) {
 function event_details_draw(self) {
     var event_data = events_by_id[this.dataset.id];
     self.stopPropagation();
-    event_details.style.display = "block";
     var infos = event_details.getElementsByClassName("event-informations")[0];
     var summary = infos.getElementsByClassName("summary")[0];
     var date = infos.getElementsByClassName("date")[0];
@@ -133,6 +132,11 @@ function event_details_draw(self) {
     description.innerHTML = event_data['content'];
     var actual_pos = this.getBoundingClientRect();
     var details_pos = event_details.getBoundingClientRect();
+    if (event_details.style.display != "block") {
+        event_details.style.display = "block";
+        details_pos = event_details.getBoundingClientRect();
+        event_details.style.display = "none";
+    }
     var day = this.parentNode;
     var days = day.parentNode;
     var day_pos = day.getBoundingClientRect();
@@ -147,6 +151,7 @@ function event_details_draw(self) {
         event_details.style.left = (day_pos.right - day_pos.width - details_pos.width).toLocaleString().replace(",", "") + "px";
     }
     event_details.style.top = actual_pos.top.toLocaleString() + "px";
+    event_details.style.display = "block";
 }
 
 function draw_events(events_list) {

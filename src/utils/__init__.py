@@ -18,6 +18,19 @@ def select_to_dict_list(selection):
     return list_
 
 
+def sql_select(conn, request):
+    """Get the result of the request as a list of dicts
+
+    Args:
+        conn (Object): Sql connection/cursor object
+        request (str): Request string
+
+    Returns:
+        list: list of selected rows
+    """
+    return select_to_dict_list(conn.execute(request).fetchall())
+
+
 def generate_sql_datafields(data_dict):
     """Return a string for the sql command and a tuple for the sql datas
 

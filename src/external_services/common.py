@@ -2,6 +2,8 @@ from os import path
 import json
 import sqlite3
 
+from utils import select_to_dict_list
+
 CREDENTIAL_DIR = "credentials"
 SERVICES_DIR = "service_keys"
 DATABASE_FILE = "database.db"
@@ -37,3 +39,12 @@ def get_database_connection():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
+
+
+def poll_calendar(cur, cal_name):
+    command = f"SELECT id from calendars WHERE original_title = '{cal_name}'"
+    rows = select_to_dict_list(cur.execute(command).fetchall())
+    if rows == []:
+        return False
+    else:
+        return rows[0]["id"]
