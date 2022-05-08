@@ -3,7 +3,7 @@ import sqlite3
 import string
 from flask import Flask, render_template, request, url_for, flash, redirect
 from datetime import datetime, timedelta
-from flask_socketio import SocketIO, send
+from flask_socketio import SocketIO, Namespace
 from external_services.google import google_auth, google_calendar
 from external_services.strava import strava_auth, strava_activities
 from utils import select_to_dict_list
@@ -34,7 +34,7 @@ def send_message(title, content):
     package = {}
     package["title"] = title
     package["data"] = content
-    send(package, json=True)
+    socketio.send(package, json=True)
 
 
 def error404():
@@ -81,7 +81,6 @@ def event(event_id):
     return render_template('event.html', event=event)
 
 
-@socketio.on('get_events')
 def get_events(data):
     start_day = datetime.fromtimestamp(int(data.split(" ")[0].replace(",", ""))/1000.0)
     day_nb = int(data.split(" ")[1])
@@ -102,8 +101,7 @@ def get_events(data):
     send_message("events", events)
 
 
-@socketio.on('get_calendars')
-def get_calendars(data):
+def get_cal_list():
     conn = get_db_connection()
     request = "SELECT * FROM calendars ORDER BY id"
     calendars = conn.execute(request).fetchall()
@@ -112,10 +110,7 @@ def get_calendars(data):
     send_message("calendars", calendars)
 
 
-@socketio.on('set_cal_color')
-def set_cal_color(data):
-    cal_id = data.split(" ")[0]
-    color = "".join(data.split(" ")[1:])
+def set_cal_color(cal_id, color):
     conn = get_db_connection()
     request = f"UPDATE calendars SET color = '{color}' WHERE id = {cal_id}"
     conn.execute(request).fetchall()
@@ -123,10 +118,8 @@ def set_cal_color(data):
     conn.close()
 
 
-@socketio.on('set_cal_visibility')
-def set_cal_visibility(data):
-    cal_id = data.split(" ")[0]
-    visibility = "1" if "".join(data.split(" ")[1:]) == "true" else "0"
+def set_cal_shown(cal_id, shown):
+    visibility = "1" if shown == "true" else "0"
     conn = get_db_connection()
     request = f"UPDATE calendars SET shown = '{visibility}' WHERE id = {cal_id}"
     conn.execute(request).fetchall()
@@ -134,10 +127,8 @@ def set_cal_visibility(data):
     conn.close()
 
 
-@socketio.on('set_cal_activation')
-def set_cal_activation(data):
-    cal_id = data.split(" ")[0]
-    activated = "1" if "".join(data.split(" ")[1:]) == "true" else "0"
+def set_cal_activated(cal_id, activation):
+    activated = "1" if activation == "true" else "0"
     conn = get_db_connection()
     request = f"UPDATE calendars SET activated = '{activated}' WHERE id = {cal_id}"
     conn.execute(request).fetchall()
@@ -145,13 +136,40 @@ def set_cal_activation(data):
     conn.close()
 
 
-@socketio.on('refresh_calendars')
-def refresh_calendars(data):
+def refresh_calendars():
     if google_auth.is_logged_in():
         google_calendar.store_calendars()
     if strava_auth.is_logged_in():
         strava_activities.store_activities_in_calendars()
 
+
+class SocketIONameSpace(Namespace):
+    def trigger_event(self, event_name, *args):
+        if len(args) != 2:
+            return
+        data = args[1]
+        if event_name == "get_events":
+            get_events(data)
+        elif event_name.startswith("set_cal_"):
+            prop = event_name.replace("set_cal_", "")
+            cal_id = data.split(" ")[0]
+            data = "".join(data.split(" ")[1:])
+            if prop == "activated":
+                set_cal_activated(cal_id, data)
+            elif prop == "shown":
+                set_cal_shown(cal_id, data)
+            elif prop == "title":
+                pass
+            elif prop == "color":
+                set_cal_color(cal_id, data)
+        elif event_name.startswith("get_cal_"):
+            if event_name == "get_cal_list":
+                get_cal_list()
+        elif event_name == "refresh_calendars":
+            refresh_calendars()
+
+
+socketio.on_namespace(SocketIONameSpace())
 
 if __name__ == '__main__':
     socketio.run(app)

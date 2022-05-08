@@ -97,7 +97,7 @@ function request_events() {
     socket.emit('get_events', start_day.getTime().toLocaleString()+" "+days_streak.toLocaleString());
 }
 function request_calendars() {
-    socket.emit('get_calendars', "");
+    socket.emit('get_cal_list', "");
 }
 request_calendars();
 request_events();
@@ -328,7 +328,7 @@ function update_cal_visibility() {
         cals_by_id[cal_id]["shown"] = 0;
     }
     update_events_visibility();
-    socket.emit('set_cal_visibility', cal_id.toLocaleString()+" "+checked.toLocaleString());
+    socket.emit('set_cal_shown', cal_id.toLocaleString()+" "+checked.toLocaleString());
 }
 
 // Colors
@@ -367,7 +367,7 @@ settings_desactivate_btn.onclick = function () {
         cals_by_id[calendars[i]["id"]] = calendars[i];
     }
     cals_by_id[cal_id]["activated"] = 0;
-    socket.emit('set_cal_activation', cal_id+" false");
+    socket.emit('set_cal_activated', cal_id+" false");
     update_events_visibility();
     update_calendar_list();
 };

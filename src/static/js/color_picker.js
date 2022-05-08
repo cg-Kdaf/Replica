@@ -39,6 +39,6 @@ var restoring_btn = document.getElementsByClassName('restore-cal-button');
 for (var i = 0; i < restoring_btn.length; i++ ) {
     restoring_btn[i].onclick = function() {
         cal_id = this.parentElement.id.split("-")[2];
-        socket.emit('set_cal_activation', cal_id.toLocaleString()+" true");
+        socket.emit('set_cal_activated', cal_id.toLocaleString()+" true");
     };
 }
