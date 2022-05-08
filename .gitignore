@@ -132,3 +132,4 @@ database.db
 references/
 credentials/*.json
 service_keys/*.json
+src/command.sql
