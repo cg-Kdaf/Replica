@@ -87,6 +87,13 @@ function update_dateline() {
     var day = new Date(start_day.getTime());
     for (var i = 0; i < dates.length; i++) {
         dates[i].innerHTML = dates[i].innerHTML.slice(0, 4) + day.getDate();
+        if (day.getDate() == today.getDate()) {
+            dates[i].style.border = "solid 0.5rem deepskyblue";
+            dates[i].style.backgroundColor = "deepskyblue";
+        }else{
+            dates[i].style.border = "";
+            dates[i].style.backgroundColor = "";
+        }
         day.setDate(day.getDate() + 1);
     }
 }
@@ -201,10 +208,6 @@ function draw_events(events_list) {
             event_elt.style.display = "block";
         } else {
             event_elt.style.display = "none";
-        }
-        if (end < today) {
-            event_elt.style.boxShadow = "inset 0px 0px 0 2000px rgba(250,250,250,0.5)";
-            event_elt.style.color = "rgb(150,150,150)";
         }
         if (start < start_day && end > enddate) {
             event_elt.style.gridColumnStart = 1;

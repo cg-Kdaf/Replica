@@ -130,7 +130,7 @@
   position: absolute;
   z-index: var(--overlay-depth);
   background-color: white;
-  transition: left 0.5s, right 0.5s, top 0.5s;
+  transition: left 0.05s, top 0.05s;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
   padding: 1rem;
   border-radius: 0.6rem;
