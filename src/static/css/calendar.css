@@ -143,3 +143,13 @@
 .multiday-events .event {
   position: relative;
 }
+
+.activity-stats {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: fit-content;
+}
+
+.activity-stats>div {
+  margin: 1rem;
+}

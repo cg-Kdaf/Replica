@@ -9,22 +9,6 @@ CREATE TABLE calendars (
     shown BOOLEAN NOT NULL DEFAULT 1
 );
 CREATE TABLE event_types(id INTEGER PRIMARY KEY AUTOINCREMENT, logo_url TEXT, title TEXT, parent_type INTEGER, FOREIGN KEY(parent_type) REFERENCES event_types(id));
-CREATE TABLE events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    original_id INTEGER UNIQUE, -- index used to refresh calendar. It's the service's event index
-    cal_id INTEGER NOT NULL, -- index corresponding to the calendar containing the event
-    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    dt_start TIMESTAMP NOT NULL,
-    dt_end TIMESTAMP,
-    summary TEXT,
-    content TEXT,
-    recurrence TEXT,
-    deleted BOOLEAN NOT NULL DEFAULT 0,
-    _type INTEGER,
-    FOREIGN KEY(_type) REFERENCES event_types(id),
-    FOREIGN KEY(cal_id) REFERENCES calendars(id) ON DELETE CASCADE
-);
 CREATE TABLE strava_activities (
     id INTEGER PRIMARY KEY,
     external_id TEXT,
@@ -58,4 +42,22 @@ CREATE TABLE strava_activities (
     gear_id TEXT,
     kilojoules FLOAT,
     average_watts FLOAT
+);
+CREATE TABLE events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    original_id INTEGER UNIQUE, -- index used to refresh calendar. It's the service's event index
+    cal_id INTEGER NOT NULL, -- index corresponding to the calendar containing the event
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dt_start TIMESTAMP NOT NULL,
+    dt_end TIMESTAMP,
+    summary TEXT,
+    content TEXT,
+    recurrence TEXT,
+    deleted BOOLEAN NOT NULL DEFAULT 0,
+    _type INTEGER,
+    strava_act_id INTEGER DEFAULT NULL,
+    FOREIGN KEY(_type) REFERENCES event_types(id),
+    FOREIGN KEY(strava_act_id) REFERENCES strava_activities(id) ON DELETE CASCADE
+    FOREIGN KEY(cal_id) REFERENCES calendars(id) ON DELETE CASCADE
 );

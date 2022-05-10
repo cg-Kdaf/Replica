@@ -87,7 +87,9 @@ def get_events(data):
     conn = get_db_connection()
     day_start = start_day.strftime('%Y-%m-%d 00:00')
     day_end = (start_day+timedelta(days=day_nb)).strftime('%Y-%m-%d')
-    request = "SELECT * FROM events WHERE deleted != 1 "
+    request = '''SELECT *, strava_activities.id AS strava_id FROM events
+                 LEFT JOIN strava_activities ON strava_activities.id=events.strava_act_id
+                 WHERE deleted != 1 '''
     request_ = f"AND ((dt_start >= '{day_start}' AND dt_start < '{day_end}')"
     request_ += f" OR (dt_end > '{day_start}' AND dt_start < '{day_start}')) ORDER BY dt_start"
     non_recursive_events = conn.execute(request + request_).fetchall()

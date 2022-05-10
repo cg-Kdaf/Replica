@@ -122,6 +122,69 @@ function remove_child_except_hidden(node, class_name) {
     }
 }
 
+function event_strava_details(event, strava_details) {
+
+    function hide_null(data, container) {
+        if (data==0) {
+            container.style.display = "none";
+        }else{
+            container.style.display = "block";
+        }
+    }
+
+    if (event["strava_act_id"] != null) {
+        strava_details.style.display = "block";
+        var value = 0;
+        var kudos_count = strava_details.getElementsByClassName("kudos")[0].getElementsByClassName("count")[0];
+        kudos_count.innerHTML = event["kudos_count"];
+        var comments_count = strava_details.getElementsByClassName("comments")[0].getElementsByClassName("count")[0];
+        comments_count.innerHTML = event["comment_count"];
+        var athletes_count = strava_details.getElementsByClassName("athletes")[0].getElementsByClassName("count")[0];
+        athletes_count.innerHTML = event["athlete_count"] - 1;
+
+        var distance = strava_details.getElementsByClassName("distance")[0].querySelectorAll("strong")[0];
+        value = event["distance"];
+        if (value < 3000) {
+            distance.innerHTML = value + " m";
+        }else{
+            distance.innerHTML = (value/1000).toFixed(2) + " km";
+        }
+        hide_null(value, strava_details.getElementsByClassName("distance")[0]);
+
+        var time = strava_details.getElementsByClassName("time")[0].querySelectorAll("strong")[0];
+        value = event["moving_time"];
+        if (value < 3600) {
+            time.innerHTML = (value/60).toFixed(0) + " min";
+        }else{
+            time.innerHTML = Math.floor(value/3600) + ":" + (value/60 - Math.floor(value/3600)*60).toFixed(0);
+        }
+        hide_null(value, strava_details.getElementsByClassName("time")[0]);
+
+        var elevation = strava_details.getElementsByClassName("elevation")[0].querySelectorAll("strong")[0];
+        elevation.innerHTML = event["total_elevation_gain"] + " m";
+        hide_null(event["total_elevation_gain"], strava_details.getElementsByClassName("elevation")[0]);
+
+        var power = strava_details.getElementsByClassName("avg-power")[0].querySelectorAll("strong")[0];
+        power.innerHTML = event["average_watts"] + " W";
+        hide_null(event["average_watts"], strava_details.getElementsByClassName("avg-power")[0]);
+
+        var energy = strava_details.getElementsByClassName("energy")[0].querySelectorAll("strong")[0];
+        energy.innerHTML = event["kilojoules"] + " kJ";
+        hide_null(event["kilojoules"], strava_details.getElementsByClassName("energy")[0]);
+
+        var energy = strava_details.getElementsByClassName("speed")[0].querySelectorAll("strong")[0];
+        value = event["average_speed"];
+        energy.innerHTML = (value*3.6).toFixed(1) + " km/h";
+        hide_null(value, strava_details.getElementsByClassName("speed")[0]);
+
+        var activity_link = strava_details.getElementsByClassName("link")[0];
+        activity_link.setAttribute('href', 'https://www.strava.com/activities/' + event["strava_id"]);
+    }else{
+        strava_details.style.display = "none";
+    }
+}
+
+
 function event_details_draw(self) {
     var event_data = events_by_id[this.dataset.id];
     self.stopPropagation();
@@ -138,6 +201,7 @@ function event_details_draw(self) {
         date.innerHTML = start.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'});
     }
     description.innerHTML = event_data['content'];
+    event_strava_details(event_data, infos.getElementsByClassName("strava-details")[0]);
     var actual_pos = this.getBoundingClientRect();
     var details_pos = event_details.getBoundingClientRect();
     if (event_details.style.display != "block") {

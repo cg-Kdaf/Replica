@@ -1,5 +1,6 @@
 :root {
     --event-depth: 1;
+    --timecursor-depth: 2;
     --highlighted-event-depth: 2;
     --overlay-depth: 3;
 }
@@ -116,7 +117,7 @@ body {
     left: -5%;
     border-radius: 0.2rem;
     background-color: #ce0c0c;
-    z-index: var(--overlay-depth);
+    z-index: var(--timecursor-depth);
 }
 
 .hidden {

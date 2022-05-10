@@ -69,7 +69,7 @@ def store_activities_in_calendars():
             "created": activity["_end_date"],
             "updated": activity["updated"],
             "summary": get_key(activity, "_name"),
-            "content": f"Distance : {get_key(activity, 'distance')}"
+            "strava_act_id": activity["id"]
         }
         values, raw_datas = generate_sql_datafields(datas)
         cur.execute("INSERT OR REPLACE INTO events " + values, raw_datas)
