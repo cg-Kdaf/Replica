@@ -214,15 +214,24 @@ function event_details_draw(self) {
     var day_pos = day.getBoundingClientRect();
     var days_pos = days.getBoundingClientRect();
     if (day.className == "multiday-events") {
-        days_pos = day_pos;
-        day_pos = actual_pos;
-    }
-    if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
-        event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
+        if (actual_pos.left+details_pos.width < day_pos.right) {
+            event_details.style.left = actual_pos.left.toLocaleString().replace(",", "") + "px";
+        }else{
+            event_details.style.left = (actual_pos.right - details_pos.width).toLocaleString().replace(",", "") + "px";
+        }
+        event_details.style.top = day_pos.bottom.toLocaleString().replace(",", "") + "px";
     }else{
-        event_details.style.left = (day_pos.right - day_pos.width - details_pos.width).toLocaleString().replace(",", "") + "px";
+        if (day_pos.left-days_pos.left < days_pos.right-day_pos.right) {
+            event_details.style.left = day_pos.right.toLocaleString().replace(",", "") + "px";
+        }else{
+            event_details.style.left = (day_pos.right - day_pos.width - details_pos.width).toLocaleString().replace(",", "") + "px";
+        }
+        if (actual_pos.top+details_pos.height > day_pos.bottom) {
+            event_details.style.top = (day_pos.bottom - details_pos.height).toLocaleString().replace(",", "") + "px";
+        }else{
+            event_details.style.top = actual_pos.top.toLocaleString().replace(",", "") + "px";
+        }
     }
-    event_details.style.top = actual_pos.top.toLocaleString() + "px";
     event_details.style.display = "block";
 }
 
