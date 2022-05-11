@@ -2,88 +2,101 @@
 var calendars = [];
 var events_by_id = {};
 const today = new Date();
-const calendar = document.getElementById("calendar");
-const event_details = document.getElementById("event-details");
-event_details.onclick = function(self) {self.stopPropagation();};
-var timeline = document.createElement("div");
-timeline.className = "timeline";
-var time_marker = document.createElement("div");
-time_marker.className = "time-marker";
-for (var i = 0; i < 24; i++) {
-    var marker = time_marker.cloneNode();
-    marker.textContent = i.toLocaleString()+":00";
-    if (i<10) {
-        marker.textContent = "0" + marker.textContent;
+var days_streak;
+var start_day;
+var callpicker;
+var socket = io();
+
+function calendar_init() {
+    const calendar = document.getElementById("calendar");
+    const event_details = document.getElementById("event-details");
+    event_details.onclick = function(self) {self.stopPropagation();};
+    var timeline = document.createElement("div");
+    timeline.className = "timeline";
+    var time_marker = document.createElement("div");
+    time_marker.className = "time-marker";
+    for (var i = 0; i < 24; i++) {
+        var marker = time_marker.cloneNode();
+        marker.textContent = i.toLocaleString()+":00";
+        if (i<10) {
+            marker.textContent = "0" + marker.textContent;
+        }
+        timeline.appendChild(marker);
     }
-    timeline.appendChild(marker);
-}
-
-var dateline = document.createElement("div");
-dateline.className = "dateline";
-var weekday = document.createElement("div");
-weekday.className = "weekday-marker";
-var days_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-for (var i = 0; i < 7; i++) {
-    var marker = weekday.cloneNode();
-    marker.textContent = days_list[i].slice(0, 3) + " 00";
-    dateline.appendChild(marker);
-}
-
-var multi_day_events = document.createElement("div");
-multi_day_events.className = "multiday-events";
-
-var day_grid = document.createElement("div");
-day_grid.className = "day-grid";
-var grid_case = document.createElement("div");
-grid_case.className = "gridcase";
-for (var i = 0; i < 7; i++) {
-    var grid_case_ = grid_case.cloneNode(deep=true);
-    grid_case_.style.gridColumn = i+1;
-    day_grid.appendChild(grid_case_);
-}
-
-var days = document.createElement("div");
-days.className = "days";
-var time_grid = document.createElement("div");
-time_grid.className = "timegrid";
-for (var i = 0; i < 7; i++) {
-    for (var j = 0; j < 24; j++) {
+    
+    var dateline = document.createElement("div");
+    dateline.className = "dateline";
+    var weekday = document.createElement("div");
+    weekday.className = "weekday-marker";
+    var days_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    for (var i = 0; i < 7; i++) {
+        var marker = weekday.cloneNode();
+        marker.textContent = days_list[i].slice(0, 3) + " 00";
+        dateline.appendChild(marker);
+    }
+    
+    var multi_day_events = document.createElement("div");
+    multi_day_events.className = "multiday-events";
+    
+    var day_grid = document.createElement("div");
+    day_grid.className = "day-grid";
+    var grid_case = document.createElement("div");
+    grid_case.className = "gridcase";
+    for (var i = 0; i < 7; i++) {
         var grid_case_ = grid_case.cloneNode(deep=true);
         grid_case_.style.gridColumn = i+1;
-        grid_case_.style.gridRow = j+1;
-        time_grid.appendChild(grid_case_);
+        day_grid.appendChild(grid_case_);
     }
+    
+    var days = document.createElement("div");
+    days.className = "days";
+    var time_grid = document.createElement("div");
+    time_grid.className = "timegrid";
+    for (var i = 0; i < 7; i++) {
+        for (var j = 0; j < 24; j++) {
+            var grid_case_ = grid_case.cloneNode(deep=true);
+            grid_case_.style.gridColumn = i+1;
+            grid_case_.style.gridRow = j+1;
+            time_grid.appendChild(grid_case_);
+        }
+    }
+    var events = document.createElement("div");
+    events.className = "events";
+    for (var i = 0; i < 7; i++) {
+        var event_ = events.cloneNode(deep=true);
+    
+        days.appendChild(event_);
+    }
+    
+    calendar.appendChild(day_grid);
+    calendar.appendChild(dateline);
+    calendar.appendChild(multi_day_events);
+    calendar.appendChild(timeline);
+    calendar.appendChild(time_grid);
+    calendar.appendChild(days);
+
+    var day = new Date(today.getTime());
+    if (day.getDay() != 1) {
+        day.setDate(day.getDate() - ((day.getDay()+6)%7));
+    }
+    start_day = new Date(day.getTime());
+    start_day.setHours(0);
+    start_day.setMinutes(0);
+    start_day.setSeconds(0);
+    start_day.setMilliseconds(0);
+    days_streak = 7;
+    draw_prev_next_btn();
+    update_dateline();
+    init_socket_receiver();
+    request_calendars();
+    request_events();
+    init_calendar_settings();
 }
-var events = document.createElement("div");
-events.className = "events";
-for (var i = 0; i < 7; i++) {
-    var event_ = events.cloneNode(deep=true);
-
-    days.appendChild(event_);
-}
-
-calendar.appendChild(day_grid);
-calendar.appendChild(dateline);
-calendar.appendChild(multi_day_events);
-calendar.appendChild(timeline);
-calendar.appendChild(time_grid);
-calendar.appendChild(days);
 
 
-var day = new Date(today.getTime());
-if (day.getDay() != 1) {
-    day.setDate(day.getDate() - ((day.getDay()+6)%7));
-}
-var start_day = new Date(day.getTime());
-start_day.setHours(0);
-start_day.setMinutes(0);
-start_day.setSeconds(0);
-start_day.setMilliseconds(0);
-var days_streak = 7;
 
-
-var dates = document.getElementsByClassName("weekday-marker");
 function update_dateline() {
+    var dates = document.getElementsByClassName("weekday-marker");
     var day = new Date(start_day.getTime());
     for (var i = 0; i < dates.length; i++) {
         dates[i].innerHTML = dates[i].innerHTML.slice(0, 4) + day.getDate();
@@ -97,20 +110,27 @@ function update_dateline() {
         day.setDate(day.getDate() + 1);
     }
 }
-update_dateline();
-
-var socket = io();
 function request_events() {
     socket.emit('get_events', start_day.getTime().toLocaleString()+" "+days_streak.toLocaleString());
 }
 function request_calendars() {
     socket.emit('get_cal_list', "");
 }
-request_calendars();
-request_events();
-socket.on('message', function(event) {
-    console.log(`Data received from server: ${event}`);
-});
+function init_socket_receiver() {
+    socket.on('json', function(event) {
+        console.log(`Data received from server: ${event["title"]}`);
+        data = event["data"];
+        switch(event["title"]) {
+            case "events":
+                draw_events(data);
+                break;
+            case "calendars":
+                calendars = data;
+                update_calendar_list();
+                break;
+        }
+    });
+}
 
 function remove_child_except_hidden(node, class_name) {
     var elts = node.getElementsByClassName(class_name);
@@ -188,6 +208,7 @@ function event_strava_details(event, strava_details) {
 function event_details_draw(self) {
     var event_data = events_by_id[this.dataset.id];
     self.stopPropagation();
+    const event_details = document.getElementById("event-details");
     var infos = event_details.getElementsByClassName("event-informations")[0];
     var summary = infos.getElementsByClassName("summary")[0];
     var date = infos.getElementsByClassName("date")[0];
@@ -339,41 +360,28 @@ function draw_events(events_list) {
     update_dateline();
 }
 
-socket.on('json', function(event) {
-    console.log(`Data received from server: ${event["title"]}`);
-    data = event["data"];
-    switch(event["title"]) {
-        case "events":
-            draw_events(data);
-            break;
-        case "calendars":
-            calendars = data;
-            update_calendar_list();
-            break;
-    }
-});
+function draw_prev_next_btn() {
+    var next_button = document.getElementById("next-week-bt");
+    var previous_button = document.getElementById("previous-week-bt");
 
+    next_button.onclick = function() {
+        start_day.setDate(start_day.getDate() + 7);
+        update_dateline();
+        request_events();
+    };
 
-var next_button = document.getElementById("next-week-bt");
-var previous_button = document.getElementById("previous-week-bt");
+    previous_button.onclick = function() {
+        start_day.setDate(start_day.getDate() - 7);
+        update_dateline();
+        request_events();
+    };
 
-next_button.onclick = function() {
-    start_day.setDate(start_day.getDate() + 7);
-    update_dateline();
-    request_events();
-};
+    var refresh_cal_button = document.getElementById("refresh-calendars");
 
-previous_button.onclick = function() {
-    start_day.setDate(start_day.getDate() - 7);
-    update_dateline();
-    request_events();
-};
-
-var refresh_cal_button = document.getElementById("refresh-calendars");
-
-refresh_cal_button.onclick = function() {
-    socket.emit('refresh_calendars', "");
-};
+    refresh_cal_button.onclick = function() {
+        socket.emit('refresh_calendars', "");
+    };
+}
 
 function update_events_visibility() {
     var cals_by_id = {};
@@ -409,74 +417,84 @@ function update_cal_visibility() {
     socket.emit('set_cal_shown', cal_id.toLocaleString()+" "+checked.toLocaleString());
 }
 
-var view_desactivated_btn = document.getElementsByClassName('calendar-list-view-desactivated')[0];
-var show_desactivated = false;
+function init_calendar_settings() {
+    var view_desactivated_btn = document.getElementsByClassName('calendar-list-view-desactivated')[0];
+    var show_desactivated = false;
 
-view_desactivated_btn.onchange = function () {
-    show_desactivated = this.checked;
-    update_calendar_list();
-}
+    view_desactivated_btn.onchange = function () {
+        show_desactivated = this.checked;
+        update_calendar_list();
+    }
 
-var colorList = [ '000000', '993300', '333300', '003300', '003366', '000066', '333399', '333333', 
-'660000', 'FF6633', '666633', '336633', '336666', '0066FF', '666699', '666666', 'CC3333', 'FF9933', '99CC33', '669966', '66CCCC', '3366FF', '663366', '999999', 'CC66FF', 'FFCC33', 'FFFF66', '99FF66', '99CCCC', '66CCFF', '993366', 'CCCCCC', 'FF99CC', 'FFCC99', 'FFFF99', 'CCffCC', 'CCFFff', '99CCFF', 'CC99FF', 'FFFFFF' ];
-var settings_panel = document.getElementById('calendar-settings');
-settings_panel.onclick = function(self) {self.stopPropagation();};
-var settings_desactivate_btn = document.getElementById('desactivate-cal-btn');
-var settings_title_field = settings_panel.getElementsByClassName('name')[0];
-var picker = document.getElementById('color-picker');
-var callpicker;
-function send_color(cal_id, color) {
-    socket.emit('set_cal_color', cal_id.toLocaleString()+" "+color);
-}
+    var colorList = [ '000000', '993300', '333300', '003300', '003366', '000066', '333399',
+                      '333333', '660000', 'FF6633', '666633', '336633', '336666', '0066FF',
+                      '666699', '666666', 'CC3333', 'FF9933', '99CC33', '669966', '66CCCC',
+                      '3366FF', '663366', '999999', 'CC66FF', 'FFCC33', 'FFFF66', '99FF66',
+                      '99CCCC', '66CCFF', '993366', 'CCCCCC', 'FF99CC', 'FFCC99', 'FFFF99',
+                      'CCffCC', 'CCFFff', '99CCFF', 'CC99FF', 'FFFFFF' ];
+    var settings_panel = document.getElementById('calendar-settings');
+    settings_panel.onclick = function(self) {self.stopPropagation();};
+    var settings_desactivate_btn = document.getElementById('desactivate-cal-btn');
+    var settings_title_field = settings_panel.getElementsByClassName('name')[0];
+    var picker = document.getElementById('color-picker');
+    function send_color(cal_id, color) {
+        socket.emit('set_cal_color', cal_id.toLocaleString()+" "+color);
+    }
 
-for (var i = 0; i < colorList.length; i++ ) {
-    picker.innerHTML += ('<li class="color-item" data-hex="' + '#' + colorList[i] + '" style="background-color:' + '#' + colorList[i] + ';"></li>');
-}
-var color_items = document.getElementsByClassName('color-item');
-for (var i = 0; i < color_items.length; i++ ) {
-    color_items[i].onclick = function () {
-        var color_var_name = '--calendar-color-'+callpicker.parentNode.id.toLocaleString();
-        document.documentElement.style.setProperty(color_var_name, this.style.backgroundColor);
-        send_color(callpicker.parentNode.id, this.style.backgroundColor);
+    for (var i = 0; i < colorList.length; i++ ) {
+        picker.innerHTML += ('<li class="color-item" data-hex="' + '#' + colorList[i] + '" style="background-color:' + '#' + colorList[i] + ';"></li>');
+    }
+    var color_items = document.getElementsByClassName('color-item');
+    for (var i = 0; i < color_items.length; i++ ) {
+        color_items[i].onclick = function () {
+            var color_var_name = '--calendar-color-'+callpicker.parentNode.id.toLocaleString();
+            document.documentElement.style.setProperty(color_var_name, this.style.backgroundColor);
+            send_color(callpicker.parentNode.id, this.style.backgroundColor);
+        };
+    }
+    const event_details = document.getElementById("event-details");
+    document.body.onclick = function () {
+        settings_panel.style.display = "none";
+        event_details.style.display = "none";
     };
+    
+    settings_desactivate_btn.onclick = function () {
+        var cal_id = callpicker.parentNode.id.toLocaleString();
+        var cals_by_id = {};
+        for (var i=0;i<calendars.length; i++) {
+            cals_by_id[calendars[i]["id"]] = calendars[i];
+        }
+        if (cals_by_id[cal_id]["activated"]) {
+            cals_by_id[cal_id]["activated"] = 0;
+        } else {
+            cals_by_id[cal_id]["activated"] = 1;
+        }
+        socket.emit('set_cal_activated', cal_id+" "+cals_by_id[cal_id]["activated"].toLocaleString());
+        update_events_visibility();
+        update_calendar_list();
+    };
+    
+    settings_title_field.onchange = function (self) {
+        var cal_id = callpicker.parentNode.id.toLocaleString();
+        var cals_by_id = {};
+        for (var i=0;i<calendars.length; i++) {
+            cals_by_id[calendars[i]["id"]] = calendars[i];
+        }
+        cals_by_id[cal_id]["title"] = self.target.value;
+        socket.emit('set_cal_title', cal_id+" "+self.target.value);
+        update_calendar_list();
+    }
 }
 
-document.body.onclick = function () {
-    settings_panel.style.display = "none";
-    event_details.style.display = "none";
-};
-
-settings_desactivate_btn.onclick = function () {
-    var cal_id = callpicker.parentNode.id.toLocaleString();
-    var cals_by_id = {};
-    for (var i=0;i<calendars.length; i++) {
-        cals_by_id[calendars[i]["id"]] = calendars[i];
-    }
-    if (cals_by_id[cal_id]["activated"]) {
-        cals_by_id[cal_id]["activated"] = 0;
-    } else {
-        cals_by_id[cal_id]["activated"] = 1;
-    }
-    socket.emit('set_cal_activated', cal_id+" "+cals_by_id[cal_id]["activated"].toLocaleString());
-    update_events_visibility();
-    update_calendar_list();
-};
-
-settings_title_field.onchange = function (self) {
-    var cal_id = callpicker.parentNode.id.toLocaleString();
-    var cals_by_id = {};
-    for (var i=0;i<calendars.length; i++) {
-        cals_by_id[calendars[i]["id"]] = calendars[i];
-    }
-    cals_by_id[cal_id]["title"] = self.target.value;
-    socket.emit('set_cal_title', cal_id+" "+self.target.value);
-    update_calendar_list();
-}
 
 function update_calendar_list() {
     var calendar_list = document.getElementById("calendar-list");
     remove_child_except_hidden(calendar_list, "calendar-item");
     var cal_elt_template = document.getElementsByClassName("calendar-item hidden")[0];
+    var view_desactivated_btn = document.getElementsByClassName('calendar-list-view-desactivated')[0];
+    show_desactivated = view_desactivated_btn.checked;
+    var settings_panel = document.getElementById('calendar-settings');
+    var settings_title_field = settings_panel.getElementsByClassName('name')[0];
 
     for (var i = 0; i < calendars.length; i++) {
         var cal = calendars[i];
@@ -514,3 +532,9 @@ function update_calendar_list() {
         calendar_list.appendChild(cal_elt);
     }
 }
+
+function main() {
+    calendar_init();
+}
+
+main();
