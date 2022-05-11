@@ -1,7 +1,7 @@
 import random
 import sqlite3
 import string
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import Flask, redirect, render_template
 from datetime import datetime, timedelta
 from flask_socketio import SocketIO, Namespace
 from external_services.google import google_auth, google_calendar
@@ -37,48 +37,19 @@ def send_message(title, content):
     socketio.send(package, json=True)
 
 
-def error404():
-    return render_template('error.html')
-
-
 @app.route('/')
 def main():
+    return redirect("/calendar")
+
+
+@app.route('/calendar')
+def calendar():
     return render_template('week_view.html')
 
 
-@app.route('/create', methods=('GET', 'POST'))
-def create():
-    if request.method == 'POST':
-        title = request.form['summary']
-        content = request.form['content']
-
-        if not title:
-            flash('Title is required!')
-        else:
-            conn = get_db_connection()
-            conn.execute('INSERT INTO events (summary, content) VALUES (?, ?)',
-                         (title, content))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('main'))
-    return render_template('create.html')
-
-
-@app.route('/calendars')
-def calendars():
-    conn = get_db_connection()
-    request = "SELECT * FROM calendars"
-    cal_elts = conn.execute(request).fetchall()
-    conn.close()
-    return render_template('calendars.html', cal_elts=cal_elts)
-
-
-@app.route('/<int:event_id>')
-def event(event_id):
-    event = get_event(event_id)
-    if event is None:
-        return error404()
-    return render_template('event.html', event=event)
+@app.route('/contacts')
+def contacts():
+    return render_template('contacts.html')
 
 
 def get_events(data):

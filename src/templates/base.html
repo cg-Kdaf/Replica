@@ -17,10 +17,18 @@
             socket.emit('my event', {data: 'I\'m connected!'});
         });
     </script>
+        {% block head %} {% endblock %}
+    <script type="text/javascript"  src="{{ url_for('static', filename= 'js/script.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto">
+    <link rel="stylesheet" href="https://d3nn82uaxijpm6.cloudfront.net/assets/strava-app-icons-fa3fdac6f7176ca3c56d1a1a73d98313b75fa8a16dbd46ed98ccd64df773ca4d.css">
 </head>
 
 <body>
+    <div class="services">
+        <a href="calendar"><div>Cal</div></a>
+        <a href="contacts"><div>People</div></a>
+    </div>
     <div class="left-side">
         {% block left_side %} {% endblock %}
     </div>

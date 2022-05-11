@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
-<h1>{% block title %} Replica Projet {% endblock %}</h1>
+{% block title %} Replica Projet Calendar {% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename= 'css/calendar.css') }}">
+<script type="text/javascript"  src="{{ url_for('static', filename= 'js/calendar.js') }}" defer></script>
+{% endblock %}
 {% block main_content %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto">
 <link rel="stylesheet" href="https://d3nn82uaxijpm6.cloudfront.net/assets/strava-app-icons-fa3fdac6f7176ca3c56d1a1a73d98313b75fa8a16dbd46ed98ccd64df773ca4d.css">
@@ -75,7 +79,6 @@
         </div>
     </div>
 </div>
-<script type="text/javascript"  src="{{ url_for('static', filename= 'js/script.js') }}"></script>
 {% endblock %}
 {% block left_side %}
 <div id="calendar-list">
