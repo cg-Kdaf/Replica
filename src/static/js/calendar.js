@@ -212,7 +212,7 @@ function event_details_draw(self) {
     var summary = infos.getElementsByClassName("summary")[0];
     var date = infos.getElementsByClassName("date")[0];
     var description = infos.getElementsByClassName("description")[0];
-    summary.innerHTML = event_data['summary'];
+    summary.innerHTML = event_data['name'];
     var start = new Date(event_data["dt_start"]);
     var end = new Date(event_data["dt_end"]);
     if (start.getDate() == end.getDate()) {
@@ -292,7 +292,7 @@ function draw_events(events_list) {
         event_elt.onclick = event_details_draw;
         var event_title = document.createElement("p");
         event_title.className = "title";
-        event_title.textContent = event_["summary"];
+        event_title.textContent = event_["name"];
         event_elt.appendChild(event_title);
         event_elt.style.backgroundColor = event_color;
         var cal = cals_by_id[event_elt.dataset.cal_id]

@@ -64,11 +64,11 @@ def store_activities_in_calendars():
         datas = {
             "cal_id": id_in_db,
             "original_id": activity["id"],
-            "dt_start": activity["_start_date"],
-            "dt_end": activity["_end_date"],
-            "created": activity["_end_date"],
+            "dt_start": activity["start_date"],
+            "dt_end": activity["end_date"],
+            "created": activity["end_date"],
             "updated": activity["updated"],
-            "summary": get_key(activity, "_name"),
+            "name": get_key(activity, "name"),
             "strava_act_id": activity["id"]
         }
         values, raw_datas = generate_sql_datafields(datas)
@@ -95,8 +95,8 @@ def store_activities():
             "total_elevation_gain": get_key(activity, "total_elevation_gain", 0.0),
             "elev_high": get_key(activity, "elev_high", 0.0),
             "elev_low": get_key(activity, "elev_low", 0.0),
-            "_start_date": activity["start_date_local"][:-1] + utc_offset,
-            "_end_date": calc_end(activity["start_date_local"], activity["elapsed_time"]) + utc_offset,
+            "start_date": activity["start_date_local"][:-1] + utc_offset,
+            "end_date": calc_end(activity["start_date_local"], activity["elapsed_time"]) + utc_offset,
             "start_latlng": ", ".join(list(map(str, get_key(activity, "start_latlng", [])))),
             "end_latlng": ", ".join(list(map(str, get_key(activity, "end_latlng", [])))),
             "map_id": get_key(get_key(activity, "map"), "id"),
@@ -110,9 +110,9 @@ def store_activities():
         }
         changing_datas = {
             "updated": now.isoformat(),  # Keep it first for updating stages
-            "_name": activity["name"],
+            "name": activity["name"],
             "distance": get_key(activity, "distance", 0.0),
-            "_type": get_key(activity, "type"),
+            "type": get_key(activity, "type"),
             "achievement_count": get_key(activity, "achievement_count", 0),
             "kudos_count": get_key(activity, "kudos_count", 0),
             "comment_count": get_key(activity, "comment_count", 0),

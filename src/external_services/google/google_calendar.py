@@ -44,8 +44,8 @@ def store_event(db_conn, event, cal_id):
         "updated": get_key(event, 'updated'),
         "dt_start": google_startend_datetime(get_key(event, 'start', {})),
         "dt_end": google_startend_datetime(get_key(event, 'end', {})),
-        "summary": get_key(event, 'summary'),
-        "content": get_key(event, 'description'),
+        "name": get_key(event, 'summary'),
+        "description": get_key(event, 'description'),
         "recurrence": "\n".join(get_key(event, 'recurrence')),
         "deleted": "1" if get_key(event, 'status', "") == "cancelled" else "0"
     }
