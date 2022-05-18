@@ -100,7 +100,7 @@ function update_dateline() {
     var day = new Date(start_day.getTime());
     for (var i = 0; i < dates.length; i++) {
         dates[i].innerHTML = dates[i].innerHTML.slice(0, 4) + day.getDate();
-        if (day.getDate() == today.getDate()) {
+        if (day.getDate() == today.getDate() && day.getMonth() == today.getMonth()) {
             dates[i].style.border = "solid 0.5rem deepskyblue";
             dates[i].style.backgroundColor = "deepskyblue";
         }else{
@@ -302,35 +302,50 @@ function draw_events(events_list) {
         } else {
             event_elt.style.display = "none";
         }
+        var col_start = -1;
+        var col_end = -1;
+        var before = false;
+        var after = false;
         if (start < start_day && end > enddate) {
-            event_elt.style.gridColumnStart = 1;
-            event_elt.style.gridColumnEnd = 8;
-            multiday_events.appendChild(event_elt);
-            continue;
+            before = true;
+            after = true;
+            col_start = 1;
+            col_end = 8;
         }
-        if (start < start_day) {
-            event_elt.style.gridColumnStart = 1;
+        else if (start < start_day) {
+            before = true;
+            col_start = 1;
             end.setMilliseconds(end.getMilliseconds()-1);
-            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
-            multiday_events.appendChild(event_elt);
-            continue;
+            col_end = (end.getDay()+6)%7+2;
         }
-        if (end > enddate) {
-            event_elt.style.gridColumnStart = day+1;
-            event_elt.style.gridColumnEnd = 8;
-            multiday_events.appendChild(event_elt);
-            continue;
+        else if (end > enddate) {
+            after = true;
+            col_start = day+1;
+            col_end = 8;
         }
-        if ((time_start == 0) && (time_end == 0)) {
-            event_elt.style.gridColumnStart = day+1;
+        else if ((time_start == 0) && (time_end == 0)) {
+            col_start = day+1;
             end.setMilliseconds(end.getMilliseconds()-1);
-            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
-            multiday_events.appendChild(event_elt);
-            continue;
+            col_end = (end.getDay()+6)%7+2;
         }
-        if ((end.getTime() - start.getTime()) > (24*60*60*1000)) {
-            event_elt.style.gridColumnStart = day+1;
-            event_elt.style.gridColumnEnd = (end.getDay()+6)%7+2;
+        else if ((end.getTime() - start.getTime()) > (24*60*60*1000)) {
+            col_start = day+1;
+            col_end = (end.getDay()+6)%7+2;
+        }
+        if (col_start != -1) {
+            event_elt.style.gridColumnStart = col_start;
+            event_elt.style.gridColumnEnd = col_end;
+            if (before == true && after == true) {
+                event_elt.style.clipPath = "polygon(1rem 0%, calc(100% - 1rem) 0%, 100% 50%, calc(100% - 1rem) 100%, 1rem 100%, 0% 50%)";
+                event_elt.style.paddingLeft = "1rem";
+                event_elt.style.paddingRight = "1rem";
+            }else if (before == true) {
+                event_elt.style.clipPath = "polygon(1rem 0%, 100% 0%, 100% 50%, 100% 100%, 1rem 100%, 0% 50%)";
+                event_elt.style.paddingLeft = "1rem";
+            }else if (after == true) {
+                event_elt.style.clipPath = "polygon(0% 0%, calc(100% - 1rem) 0%, 100% 50%, calc(100% - 1rem) 100%, 0% 100%, 0% 50%)";
+                event_elt.style.paddingRight = "1rem";
+            }
             multiday_events.appendChild(event_elt);
             continue;
         }
