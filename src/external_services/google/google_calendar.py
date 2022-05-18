@@ -27,28 +27,34 @@ def get_calendar(cal_api, calendar_id, updated_min=None):
     return events
 
 
-def google_startend_datetime(date_time_dict):
+def google_startend_timestamp(date_time_dict):
     whole_datetime = ""
     if "date" in date_time_dict.keys():
         whole_datetime = whole_datetime + date_time_dict["date"] + " "
     if "dateTime" in date_time_dict.keys():
         whole_datetime = whole_datetime + date_time_dict["dateTime"]
+    else:
+        whole_datetime = whole_datetime + "00:00:00"
+    whole_datetime = int(datetime.fromisoformat(whole_datetime).timestamp())
+    print(whole_datetime)
     return whole_datetime
 
 
 def store_event(db_conn, event, cal_id):
+    now = datetime.now().isoformat()
     datas = {
         "cal_id": cal_id,
-        "original_id": get_key(event, "iCalUID", "NULL"),
-        "created": get_key(event, 'created'),
-        "updated": get_key(event, 'updated'),
-        "dt_start": google_startend_datetime(get_key(event, 'start', {})),
-        "dt_end": google_startend_datetime(get_key(event, 'end', {})),
+        "original_id": get_key(event, "iCalUID", "NULL") + get_key(event, "id"),
+        "created": int(datetime.fromisoformat(get_key(event, 'created', now).split(".")[0]).timestamp()),
+        "updated": int(datetime.fromisoformat(get_key(event, 'updated', now).split(".")[0]).timestamp()),
+        "dt_start": google_startend_timestamp(get_key(event, 'start', {})),
+        "dt_end": google_startend_timestamp(get_key(event, 'end', {})),
         "name": get_key(event, 'summary'),
         "description": get_key(event, 'description'),
         "recurrence": "\n".join(get_key(event, 'recurrence')),
         "deleted": "1" if get_key(event, 'status', "") == "cancelled" else "0"
     }
+    print(datas)
     values, raw_datas = generate_sql_datafields(datas)
     db_conn.execute("REPLACE INTO events " + values, raw_datas)
 
@@ -57,7 +63,7 @@ def store_calendars():
     conn = get_database_connection()
     cur = conn.cursor()
 
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_timestamp = datetime.now(timezone.utc).timestamp()
     existing_cals = select_to_dict_list(cur.execute("SELECT * FROM calendars").fetchall())
     cals_by_id = list_to_dict(existing_cals, "external_id")
     cal_api = googleapiclient.discovery.build('calendar', 'v3', credentials=build_credentials())
@@ -77,7 +83,7 @@ def store_calendars():
         else:
             id_in_db = cals_by_id[calendar["id"]]["id"]
             last_time_updated = get_key(cals_by_id[calendar["id"]], "updated", None)
-            last_time_updated = datetime.fromisoformat(last_time_updated) - timedelta(minutes=30)
+            last_time_updated = datetime.fromtimestamp(last_time_updated) - timedelta(minutes=30)
             last_time_updated = last_time_updated.strftime("%Y-%m-%dT%H:%M:%SZ")
             try:
                 events = get_calendar(cal_api, calendar["id"], updated_min=last_time_updated)
@@ -93,7 +99,7 @@ def store_calendars():
                             continue
                         store_event(cur, event, id_in_db)
                 else:
-                    raise
-        cur.execute(f"UPDATE calendars SET updated = '{now_iso}' WHERE id = {id_in_db}").fetchall()
+                    raise HttpError
+        cur.execute(f"UPDATE calendars SET updated = '{now_timestamp}' WHERE id = {id_in_db}").fetchall()
     conn.commit()
     conn.close()

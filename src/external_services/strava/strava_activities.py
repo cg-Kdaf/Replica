@@ -1,9 +1,8 @@
-import pytz
 import requests
-from .strava_auth import build_credentials
+from .strava_auth import build_credentials, get_cookie_valid
 from ..common import get_database_connection, poll_calendar
-from datetime import datetime, timedelta
-from utils import generate_sql_datafields, get_key, sql_select
+from datetime import datetime
+from utils import generate_sql_datafields, generate_sql_datafields_multiple, get_key, sql_select
 
 API_URL = "https://www.strava.com/api/v3/"
 STRAVA_CAL_NAME = "Strava Calendar"
@@ -36,10 +35,39 @@ def get_all_activities():
     return activities
 
 
-def calc_end(start, duration_seconds):
-    start = datetime.strptime(start, "%Y-%m-%dT%H:%M:%S%z")
-    start += timedelta(seconds=duration_seconds)
-    return start.strftime("%Y-%m-%dT%H:%M:%S")
+def get_activity_detailed(id):
+    activity = request_api("activities/"+str(id))
+    return activity
+
+
+def get_activity_athletes(id):
+    cookies = get_cookie_valid()
+    json = requests.get(f"https://www.strava.com/feed/activity/{id}/group_athletes",
+                        cookies=cookies).json()
+    return json["athletes"]
+
+
+def store_athlete_activity(cur, activity_id):
+    athletes = get_activity_athletes(activity_id)
+    if athletes == []:
+        return
+    datas = []
+    for athlete in athletes:
+        data = {
+            "id": athlete["id"],
+            "firstname": get_key(athlete, "firstname"),
+            "lastname": get_key(athlete, "name").replace(get_key(athlete, "firstname"), ""),
+            "picture_medium": get_key(athlete, "avatar_url"),
+            "picture": get_key(athlete, "avatar_url").replace("medium", "large"),
+            "city": get_key(athlete, "location"),
+            "following_me": get_key(athlete, "is_following")
+        }
+        datas.append(data)
+    values, raw_datas = generate_sql_datafields_multiple(datas)
+    cur.executemany("INSERT OR REPLACE INTO strava_athletes " + values, raw_datas)
+    act_athletes = [{"athlete_id": ath["id"], "activity_id": activity_id} for ath in athletes]
+    values, raw_datas = generate_sql_datafields_multiple(act_athletes)
+    cur.executemany("INSERT OR IGNORE INTO strava_activities_athletes " + values, raw_datas)
 
 
 def store_activities_in_calendars():
@@ -73,8 +101,8 @@ def store_activities_in_calendars():
         }
         values, raw_datas = generate_sql_datafields(datas)
         cur.execute("INSERT OR REPLACE INTO events " + values, raw_datas)
-    request = f"UPDATE calendars SET updated = '{datetime.now().isoformat()}' WHERE id = {id_in_db}"
-    conn.execute(request).fetchall()
+    request = f"UPDATE calendars SET updated = '{datetime.now().timestamp()}' WHERE id = {id_in_db}"
+    cur.execute(request)
     conn.commit()
     conn.close()
 
@@ -85,7 +113,7 @@ def store_activities():
     now = datetime.now()
 
     for activity in get_all_activities():
-        utc_offset = datetime.now(pytz.timezone(activity["timezone"][12:])).isoformat()[-6:]
+        start = int(datetime.strptime(activity["start_date"], "%Y-%m-%dT%H:%M:%S%z").timestamp())
         datas = {
             "id": activity["id"],
             "external_id": activity["external_id"],
@@ -95,8 +123,8 @@ def store_activities():
             "total_elevation_gain": get_key(activity, "total_elevation_gain", 0.0),
             "elev_high": get_key(activity, "elev_high", 0.0),
             "elev_low": get_key(activity, "elev_low", 0.0),
-            "start_date": activity["start_date_local"][:-1] + utc_offset,
-            "end_date": calc_end(activity["start_date_local"], activity["elapsed_time"]) + utc_offset,
+            "start_date": start,
+            "end_date": start + int(activity["elapsed_time"]),
             "start_latlng": ", ".join(list(map(str, get_key(activity, "start_latlng", [])))),
             "end_latlng": ", ".join(list(map(str, get_key(activity, "end_latlng", [])))),
             "map_id": get_key(get_key(activity, "map"), "id"),
@@ -106,10 +134,11 @@ def store_activities():
             "average_speed": get_key(activity, "average_speed", 0.0),
             "max_speed": get_key(activity, "max_speed", 0.0),
             "kilojoules": get_key(activity, "kilojoules", 0.0),
-            "average_watts": get_key(activity, "average_watts", 0.0)
+            "average_watts": get_key(activity, "average_watts", 0.0),
+            "detailed": 0
         }
         changing_datas = {
-            "updated": now.isoformat(),  # Keep it first for updating stages
+            "updated": int(now.timestamp()),  # Keep it first for updating stages
             "name": activity["name"],
             "distance": get_key(activity, "distance", 0.0),
             "type": get_key(activity, "type"),
@@ -129,9 +158,87 @@ def store_activities():
                                                 FROM strava_activities
                                                 WHERE id = {activity['id']}''')
             if list(actual_values[0].values())[1:] != list(changing_datas.values())[1:]:
+                # Need to update
                 set_keys = " = ? , ".join(list(changing_datas.keys())) + " = ?"
                 set_values = list(changing_datas.values())
                 cur.execute(f"UPDATE strava_activities SET {set_keys} WHERE id = {activity['id']}",
                             set_values)
+                if actual_values[0]["athlete_count"] != changing_datas["athlete_count"]:
+                    store_athlete_activity(cur, activity["id"])
+
+    detailed_act_needed = sql_select(cur, '''SELECT id
+                                             FROM strava_activities
+                                             WHERE detailed = 0''')
+    for activity in detailed_act_needed[:80]:
+        store_activity_detailed(cur, activity["id"])
+        store_athlete_activity(cur, activity["id"])
+
     conn.commit()
     conn.close()
+
+
+def store_activity_detailed(cur, activity_id):
+
+    activity = get_activity_detailed(activity_id)
+    if 'id' not in activity.keys():
+        return
+    # TODO #8 too slow here. Is it the requests or the db storing ?
+    laps = get_key(activity, "laps", [])
+    laps_dist = []
+    laps_times = []
+    laps_spds = []
+    for lap in laps:
+        laps_dist.append(str(lap["distance"]))
+        laps_times.append(str(lap["elapsed_time"]))
+        laps_spds.append(str(lap["average_speed"]))
+    now = datetime.now()
+    start = datetime.strptime(activity["start_date"], "%Y-%m-%dT%H:%M:%S%z").timestamp()
+    datas = {
+        "id": activity["id"],
+        "external_id": activity["external_id"],
+        "upload_id": activity["upload_id"],
+        "athlete_id": activity["athlete"]["id"],
+        "updated": now.timestamp(),  # Keep it first for updating stages
+        "name": activity["name"],
+        "description": get_key(activity, "description"),
+        "moving_time": get_key(activity, "moving_time", 0),
+        "elapsed_time": get_key(activity, "elapsed_time", 0),
+        "total_elevation_gain": get_key(activity, "total_elevation_gain", 0.0),
+        "elev_high": get_key(activity, "elev_high", 0.0),
+        "elev_low": get_key(activity, "elev_low", 0.0),
+        "start_date": start,
+        "end_date": start + int(activity["elapsed_time"]),
+        "start_latlng": ", ".join(list(map(str, get_key(activity, "start_latlng", [])))),
+        "end_latlng": ", ".join(list(map(str, get_key(activity, "end_latlng", [])))),
+        "map_id": get_key(get_key(activity, "map"), "id"),
+        "map_polyline": get_key(get_key(activity, "map"), "polyline"),
+        "map_summary_polyline": get_key(get_key(activity, "map"), "summary_polyline"),
+        "upload_id_str": get_key(activity, "upload_id_str"),
+        "average_speed": get_key(activity, "average_speed", 0.0),
+        "max_speed": get_key(activity, "max_speed", 0.0),
+        "kilojoules": get_key(activity, "kilojoules", 0.0),
+        "calories": get_key(activity, "calories", 0.0),
+        "average_watts": get_key(activity, "average_watts", 0.0),
+        "max_watts": get_key(activity, "max_watts", 0.0),
+        "average_cadence": get_key(activity, "average_cadence", 0.0),
+        "average_heartrate": get_key(activity, "average_heartrate", 0),
+        "max_heartrate": get_key(activity, "max_heartrate", 0),
+        "distance": get_key(activity, "distance", 0.0),
+        "type": get_key(activity, "type"),
+        "achievement_count": get_key(activity, "achievement_count", 0),
+        "pr_count": get_key(activity, "pr_count", 0),
+        "kudos_count": get_key(activity, "kudos_count", 0),
+        "comment_count": get_key(activity, "comment_count", 0),
+        "athlete_count": get_key(activity, "athlete_count", 0),
+        "photo_count": get_key(activity, "photo_count", 0),
+        "total_photo_count": get_key(activity, "total_photo_count", 0),
+        "trainer": 0 if get_key(activity, "trainer", 0) else 1,
+        "workout_type": get_key(activity, "workout_type", 0),
+        "gear_id": get_key(activity, "gear_id"),
+        "laps_distances": " ".join(laps_dist),
+        "laps_times": " ".join(laps_times),
+        "laps_speeds": " ".join(laps_spds),
+        "detailed": 1
+    }
+    values, raw_datas = generate_sql_datafields(datas)
+    cur.execute("INSERT OR REPLACE INTO strava_activities " + values, raw_datas)

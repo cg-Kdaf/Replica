@@ -50,8 +50,8 @@ def get_recurring_events(initiator_events, period_start, period_end):
             event_obj.add(parts[0], props)
 
         event_obj["ID"] = event["id"]
-        event_obj.add('dtstart', str_date_or_datetime(event["dt_start"]))
-        event_obj.add('dtend', str_date_or_datetime(event["dt_end"]))
+        event_obj.add('dtstart', datetime.fromtimestamp(event["dt_start"]))
+        event_obj.add('dtend', datetime.fromtimestamp(event["dt_end"]))
         calendar.add_component(event_obj)
     events_in_period = recurring_ical_events.of(calendar).between(period_start, period_end)
     for event in events_in_period:
@@ -59,7 +59,7 @@ def get_recurring_events(initiator_events, period_start, period_end):
         end = event["dtend"].dt
         id = event["ID"]
         new_event = deepcopy(events_by_id[id])
-        new_event["dt_start"] = start.replace(tzinfo=LOCAL_TIMEZONE).isoformat()
-        new_event["dt_end"] = end.replace(tzinfo=LOCAL_TIMEZONE).isoformat()
+        new_event["dt_start"] = start.replace(tzinfo=LOCAL_TIMEZONE).timestamp()
+        new_event["dt_end"] = end.replace(tzinfo=LOCAL_TIMEZONE).timestamp()
         instanced_events.append(new_event)
     return instanced_events

@@ -213,14 +213,14 @@ function event_details_draw(self) {
     var date = infos.getElementsByClassName("date")[0];
     var description = infos.getElementsByClassName("description")[0];
     summary.innerHTML = event_data['name'];
-    var start = new Date(event_data["dt_start"]);
-    var end = new Date(event_data["dt_end"]);
+    var start = new Date(event_data["dt_start"]*1000);
+    var end = new Date(event_data["dt_end"]*1000);
     if (start.getDate() == end.getDate()) {
         date.innerHTML = start.toLocaleDateString("en-us", { weekday: 'long', month: 'long', day: 'numeric' }) + " - " + start.toLocaleTimeString("en-us", {hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleTimeString("en-us", {hour: 'numeric', minute:'2-digit'});
     }else{
         date.innerHTML = start.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'}) + " - " + end.toLocaleString("en-us", { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'});
     }
-    description.innerHTML = event_data['content'];
+    description.innerHTML = event_data['description'];
     event_strava_details(event_data, infos.getElementsByClassName("strava-details")[0]);
     var actual_pos = this.getBoundingClientRect();
     var details_pos = event_details.getBoundingClientRect();
@@ -280,8 +280,8 @@ function draw_events(events_list) {
         var event_ = events_list[i];
         events_by_id[event_["id"]] = event_;
         var event_color = 'var(--calendar-color-'+event_["cal_id"].toLocaleString()+")";
-        var start = new Date(event_["dt_start"]);
-        var end = new Date(event_["dt_end"]);
+        var start = new Date(event_["dt_start"]*1000);
+        var end = new Date(event_["dt_end"]*1000);
         var day = (start.getDay()+6)%7;
         var time_start = start.getHours() * 60 + start.getMinutes();
         var time_end = end.getHours() * 60 + end.getMinutes();

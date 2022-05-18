@@ -7,20 +7,18 @@
 
 body {
     display: grid;
-    grid-template-columns: max-content;
+    grid-template-columns: max-content max-content auto;
     font-family: "Roboto", Arial, sans-serif;
 }
 
 body .services {
     grid-row: 2;
     grid-column: 1;
-    width: auto;
 }
 
 .left-side {
     grid-row: 2;
     grid-column: 2;
-    width: auto;
 }
 
 .main-content {

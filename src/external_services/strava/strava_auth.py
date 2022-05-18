@@ -3,6 +3,7 @@ import functools
 import flask
 from authlib.integrations.requests_client import OAuth2Session
 from requests import request
+import requests
 
 from utils import get_key
 from ..common import get_credentials, store_credentials, get_service_keys, AUTH_STATE_KEY, AUTH_TOKEN_KEY
@@ -11,7 +12,7 @@ ACCESS_TOKEN_URI = 'https://www.strava.com/oauth/token'
 AUTHORIZATION_URL = 'https://www.strava.com/oauth/authorize'
 LOGOUT_URL = 'https://www.strava.com/oauth/deauthorize'
 
-AUTHORIZATION_SCOPE = 'activity:read_all'
+AUTHORIZATION_SCOPE = 'activity:read_all,activity:read,profile:read_all,read,read_all'
 
 AUTH_REDIRECT_URI = "http://127.0.0.1:5000/strava/auth"
 BASE_URI = "http://127.0.0.1:5000"
@@ -44,6 +45,18 @@ def is_logged_in():
             return True
         return False
     return True
+
+
+def get_cookie_valid():
+    creds = get_credentials(SERVICE_NAME)
+    strava_session_cookie = get_key(creds, '_strava4_session')
+    if not strava_session_cookie:
+        return False
+    strava_session_cookie = {"_strava4_session": strava_session_cookie}
+    request = requests.get("https://heatmap-external-a.strava.com/auth", cookies=strava_session_cookie)
+    if "Logged in" in request.content.decode():
+        return strava_session_cookie
+    return False
 
 
 def build_credentials():
@@ -115,6 +128,6 @@ def google_auth_redirect():
 def logout():
     creds = build_credentials()
     request("POST", LOGOUT_URL, params=creds)
-    store_credentials(SERVICE_NAME, {})
+    store_credentials(SERVICE_NAME, {AUTH_STATE_KEY: {}})
 
     return flask.redirect(BASE_URI)

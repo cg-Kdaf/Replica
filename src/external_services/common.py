@@ -23,6 +23,8 @@ def get_credentials(service_name):
 
 
 def store_credentials(service_name, data):
+    credentials = get_credentials(service_name)
+    data = {**credentials, **data}
     with open(path.join(__credential_path, service_name+".json"), "w") as file:
         json.dump(data, file)
 

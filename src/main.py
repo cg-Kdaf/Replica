@@ -56,8 +56,8 @@ def get_events(data):
     start_day = datetime.fromtimestamp(int(data.split(" ")[0].replace(",", ""))/1000.0)
     day_nb = int(data.split(" ")[1])
     conn = get_db_connection()
-    day_start = start_day.strftime('%Y-%m-%d 00:00')
-    day_end = (start_day+timedelta(days=day_nb)).strftime('%Y-%m-%d')
+    day_start = start_day.timestamp()
+    day_end = (start_day+timedelta(days=day_nb)).timestamp()
     request = '''SELECT *, strava_activities.id AS strava_id FROM events
                  LEFT JOIN strava_activities ON strava_activities.id=events.strava_act_id
                  WHERE deleted != 1 '''
