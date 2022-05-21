@@ -1,0 +1,74 @@
+
+
+.main-grid {
+    text-align: center;
+    height: 100%;
+}
+
+.search-bar input {
+    margin: 0.2rem;
+    width: 60%;
+    border-radius: 2rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--front-color-1);
+    border: none;
+    font-size: large;
+}
+
+.scroll {
+    height: inherit;
+    overflow: scroll;
+    width: auto;
+}
+
+.contact-list {
+    height: min-content;
+    display: grid;
+    gap: 1rem;
+    margin: 0 20%;
+    margin-top: 2rem;
+}
+
+.contact-item {
+    border-radius: 4rem;
+    padding: 0.4rem;
+    background-color: var(--front-color-2);
+    box-shadow: 0px 0px 30px 0 rgba(0, 0, 0, 0.396);
+    font-size: medium;
+    display: flex;
+    gap: 0.5rem;
+    /* padding-right: 1rem; */
+}
+
+.contact-item:hover {
+    box-shadow: 0px 0px 30px 0 rgba(0, 0, 0, 0.715);
+}
+
+.contact-item * {
+    text-overflow: clip;
+    color: var(--font-color-1);
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    grid-row: 1;
+    margin: auto 0;
+}
+
+.contact-item .spacer {
+  flex-grow: 1;
+}
+
+.contact-item img {
+    width: 3rem;
+    height: 3rem;
+    clip-path: circle(50%);
+}
+
+.contact-item .full-name {
+    font-size: x-large;
+}
+
+.contact-item .people-name {
+    font-size: medium;
+    color: var(--font-color-2);
+}

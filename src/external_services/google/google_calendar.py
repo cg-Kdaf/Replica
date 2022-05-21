@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 import googleapiclient.discovery
 from googleapiclient.errors import HttpError
 from .google_auth import build_credentials
-from ..common import get_database_connection
-from utils import list_to_dict, select_to_dict_list, generate_sql_datafields, get_key
+from utils import list_to_dict, select_to_dict_list, get_key
+from utils.database import generate_sql_datafields, get_database_connection
 
 
 def get_calendar(cal_api, calendar_id, updated_min=None):
@@ -36,7 +36,6 @@ def google_startend_timestamp(date_time_dict):
     else:
         whole_datetime = whole_datetime + "00:00:00"
     whole_datetime = int(datetime.fromisoformat(whole_datetime).timestamp())
-    print(whole_datetime)
     return whole_datetime
 
 
@@ -54,7 +53,6 @@ def store_event(db_conn, event, cal_id):
         "recurrence": "\n".join(get_key(event, 'recurrence')),
         "deleted": "1" if get_key(event, 'status', "") == "cancelled" else "0"
     }
-    print(datas)
     values, raw_datas = generate_sql_datafields(datas)
     db_conn.execute("REPLACE INTO events " + values, raw_datas)
 

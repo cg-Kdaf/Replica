@@ -1,8 +1,9 @@
 import requests
 from .strava_auth import build_credentials, get_cookie_valid
-from ..common import get_database_connection, poll_calendar
+from ..common import poll_calendar
 from datetime import datetime
-from utils import generate_sql_datafields, generate_sql_datafields_multiple, get_key, sql_select
+from utils import get_key
+from utils.database import get_database_connection, generate_sql_datafields, generate_sql_datafields_multiple, sql_select
 
 API_URL = "https://www.strava.com/api/v3/"
 STRAVA_CAL_NAME = "Strava Calendar"

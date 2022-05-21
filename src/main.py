@@ -5,7 +5,7 @@ from flask import Flask, redirect, render_template
 from datetime import datetime, timedelta
 from flask_socketio import SocketIO, Namespace
 from external_services.google import google_auth, google_calendar
-from external_services.strava import strava_auth, strava_activities
+from external_services.strava import strava_auth, strava_activities, strava_athletes
 from utils import select_to_dict_list
 from utils.calendar import get_recurring_events
 
@@ -74,6 +74,23 @@ def get_events(data):
     send_message("events", events)
 
 
+def get_strava_athletes(data):
+    conn = get_db_connection()
+    request = '''SELECT *,
+                 contacts.first_name AS contact_first_name,
+                 contacts.last_name AS contact_last_name
+                 FROM strava_athletes
+                 LEFT JOIN contacts ON strava_athletes.contact_id = contacts.id'''
+    strava_athletes = conn.execute(request).fetchall()
+    conn.close()
+    strava_athletes = select_to_dict_list(strava_athletes)
+    send_message("strava_athletes", strava_athletes)
+
+
+def strava_athlete_to_contact(data):
+    strava_athletes.people_contact_from_athlete(data)
+
+
 def get_cal_list():
     conn = get_db_connection()
     request = "SELECT * FROM calendars ORDER BY id"
@@ -131,6 +148,10 @@ class SocketIONameSpace(Namespace):
         data = args[1]
         if event_name == "get_events":
             get_events(data)
+        if event_name == "get_strava_athletes":
+            get_strava_athletes(data)
+        if event_name == "create_contact_from_strava":
+            strava_athlete_to_contact(data)
         elif event_name.startswith("set_cal_"):
             prop = event_name.replace("set_cal_", "")
             cal_id = data.split(" ")[0]

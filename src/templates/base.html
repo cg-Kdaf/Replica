@@ -25,15 +25,18 @@
 </head>
 
 <body>
-    <div class="services">
-        <a href="calendar"><div>Cal</div></a>
-        <a href="contacts"><div>People</div></a>
-    </div>
-    <div class="left-side">
-        {% block left_side %} {% endblock %}
-    </div>
     <div class="main-content">
         {% block main_content %} {% endblock %}
+    </div>
+    <div class="left-side">
+        <div class="service-name">
+            {% block service_name %} {% endblock %}
+        </div>
+        {% block left_side %} {% endblock %}
+    </div>
+    <div class="services">
+        <a href="calendar"><img src="{{url_for('static', filename= 'images/logo_calendar.svg')}}"></a>
+        <a href="contacts"><img src="{{url_for('static', filename= 'images/logo_contacts.svg')}}"></a>
     </div>
 </body>
 

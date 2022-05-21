@@ -4,7 +4,40 @@
 <link rel="stylesheet" href="{{ url_for('static', filename= 'css/contacts.css') }}">
 <script type="text/javascript"  src="{{ url_for('static', filename= 'js/contacts.js') }}" defer></script>
 {% endblock %}
+{% block service_name %}
+<p>Contacts</p>
+{% endblock %}
 {% block main_content %}
+<div class="main-grid">
+    <div class="search-bar">
+        <input id="search-field" type="text" placeholder="Search">
+    </div>
+    <div class="scroll">
+    <div class="contact-list">
+        <div class="people-contact contact-item hidden">
+            <img class="profile">
+            <p class="full-name"></p>
+            <div class="spacer"></div>
+            <p class="relation"></p>
+            <p class="age"></p>
+            <div>
+                <p class="phone-number"></p>
+                <p class="email"></p>
+            </div>
+        </div>
+        <div class="strava-contact contact-item hidden">
+            <img class="profile">
+            <div>
+                <p class="full-name"></p>
+                <p class="people-name"></p>
+            </div>
+            <div class="spacer"></div>
+            <p class="location"></p>
+            <img src="{{url_for('static', filename= 'images/plus_icon.svg')}}" class="plus-btn hidden">
+        </div>
+    </div>
+</div>
+</div>
 {% endblock %}
 {% block left_side %}
 {% endblock %}

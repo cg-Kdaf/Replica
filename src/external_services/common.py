@@ -1,12 +1,10 @@
 from os import path
 import json
-import sqlite3
 
 from utils import select_to_dict_list
 
 CREDENTIAL_DIR = "credentials"
 SERVICES_DIR = "service_keys"
-DATABASE_FILE = "database.db"
 
 AUTH_TOKEN_KEY = 'auth_token'
 AUTH_STATE_KEY = 'auth_state'
@@ -34,13 +32,6 @@ def get_service_keys(service_name):
         with open(path.join(__service_key_path, service_name+".json"), "r") as file:
             return json.load(file)
     return {}
-
-
-def get_database_connection():
-    conn = sqlite3.connect(path.join(path.curdir, DATABASE_FILE))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys=ON")
-    return conn
 
 
 def poll_calendar(cur, cal_name):

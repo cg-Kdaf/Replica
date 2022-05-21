@@ -103,9 +103,44 @@ CREATE TABLE strava_segments (
   start_latlng TEXT,
   end_latlng TEXT
 );
-CREATE TABLE strava_athletes (
+CREATE TABLE strava_gears (
   id INTEGER PRIMARY KEY,
-  human_id INTEGER,
+  athlete_id INTEGER,
+  name TEXT,
+  description TEXT,
+  distance FLOAT,
+  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id)
+);
+CREATE TABLE strava_comments (
+  id INTEGER PRIMARY KEY,
+  athlete_id INTEGER,
+  activity_id INTEGER,
+  description TEXT,
+  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id),
+  FOREIGN KEY(activity_id) REFERENCES strava_activities(id)
+);
+CREATE TABLE strava_activities_athletes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  athlete_id INTEGER,
+  activity_id INTEGER,
+  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id),
+  FOREIGN KEY(activity_id) REFERENCES strava_activities(id),
+  UNIQUE (athlete_id, activity_id)
+);
+CREATE TABLE contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT,
+    alias TEXT,
+    birth_date INTEGER,
+    picture TEXT,
+    emails TEXT, -- space separated emails
+    phone_numbers TEXT, -- space separated phone numbers with dots separating two numbers
+    phone_numbers_alias TEXT -- space separated alias
+);
+CREATE TABLE "strava_athletes" (
+  id INTEGER PRIMARY KEY,
+  contact_id INTEGER,
   firstname TEXT,
   lastname TEXT,
   sex BOOLEAN, -- 1 for woman, 0 for man
@@ -114,29 +149,6 @@ CREATE TABLE strava_athletes (
   picture TEXT, -- url to profile pic
   follower_count INTEGER,
   following_me BOOLEAN, -- follows logged athlete
-  i_follow BOOLEAN -- logged athlete follows
-);
-CREATE TABLE strava_gears (
-  id INTEGER PRIMARY KEY,
-  athlete_id INTEGER,
-  name TEXT,
-  description TEXT,
-  distance FLOAT,
-  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id)
-);
-CREATE TABLE strava_comments (
-  id INTEGER PRIMARY KEY,
-  athlete_id INTEGER,
-  activity_id INTEGER,
-  description TEXT,
-  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id),
-  FOREIGN KEY(activity_id) REFERENCES strava_activities(id)
-);
-CREATE TABLE strava_activities_athletes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  athlete_id INTEGER,
-  activity_id INTEGER,
-  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id),
-  FOREIGN KEY(activity_id) REFERENCES strava_activities(id),
-  UNIQUE (athlete_id, activity_id)
+  i_follow BOOLEAN, -- logged athlete follows
+  FOREIGN KEY(contact_id) REFERENCES contacts(id)
 );
