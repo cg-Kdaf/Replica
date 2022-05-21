@@ -109,21 +109,21 @@ CREATE TABLE strava_gears (
   name TEXT,
   description TEXT,
   distance FLOAT,
-  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id)
+  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id)
 );
 CREATE TABLE strava_comments (
   id INTEGER PRIMARY KEY,
   athlete_id INTEGER,
   activity_id INTEGER,
   description TEXT,
-  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id),
+  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id),
   FOREIGN KEY(activity_id) REFERENCES strava_activities(id)
 );
 CREATE TABLE strava_activities_athletes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   athlete_id INTEGER,
   activity_id INTEGER,
-  FOREIGN KEY(athlete_id) REFERENCES "strava_athletes"(id),
+  FOREIGN KEY(athlete_id) REFERENCES strava_athletes(id),
   FOREIGN KEY(activity_id) REFERENCES strava_activities(id),
   UNIQUE (athlete_id, activity_id)
 );
@@ -151,4 +151,6 @@ CREATE TABLE "strava_athletes" (
   following_me BOOLEAN, -- follows logged athlete
   i_follow BOOLEAN, -- logged athlete follows
   FOREIGN KEY(contact_id) REFERENCES contacts(id)
+       ON UPDATE SET NULL
+       ON DELETE SET NULL
 );

@@ -7,6 +7,19 @@
 {% block service_name %}
 <p>Contacts</p>
 {% endblock %}
+{% block left_side %}
+<div class="contacts-lists">
+    <input type="radio" id="contactChoice1"
+    name="contact-list" value="contacts" checked>
+    <label for="contactChoice1"><p>People</p></label>
+    <input type="radio" id="contactChoice2"
+    name="contact-list" value="strava">
+    <label for="contactChoice2"><p>Strava athletes</p></label>
+    <input type="radio" id="contactChoice3"
+    name="contact-list" value="google">
+    <label for="contactChoice3"><p>Google contacts</p></label>
+</div>
+{% endblock %}
 {% block main_content %}
 <div class="main-grid">
     <div class="search-bar">
@@ -14,6 +27,11 @@
     </div>
     <div class="scroll">
     <div class="contact-list">
+        <div class="no-contact contact-item hidden">
+            <div class="spacer"></div>
+            <h3>There is no contacts in this section</h3>
+            <div class="spacer"></div>
+        </div>
         <div class="people-contact contact-item hidden">
             <img class="profile">
             <p class="full-name"></p>
@@ -28,7 +46,7 @@
         <div class="strava-contact contact-item hidden">
             <img class="profile">
             <div>
-                <p class="full-name"></p>
+                <a target="_blank" href=""><p class="full-name"></p></a>
                 <p class="people-name"></p>
             </div>
             <div class="spacer"></div>
@@ -38,6 +56,4 @@
     </div>
 </div>
 </div>
-{% endblock %}
-{% block left_side %}
 {% endblock %}

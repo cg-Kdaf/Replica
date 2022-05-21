@@ -9,7 +9,7 @@ def people_contact_from_athlete(id):
         conn,
         first_name=athlete["firstname"].title(),
         last_name=athlete["lastname"].title(),
-        picture=athlete["picture"].title()
+        picture=athlete["picture_medium"]
     )
     conn.execute(f"UPDATE strava_athletes SET contact_id = '{contact_id}' WHERE id = {id}")
     conn.commit()

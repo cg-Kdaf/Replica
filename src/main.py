@@ -20,6 +20,7 @@ socketio = SocketIO(app)
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -87,6 +88,16 @@ def get_strava_athletes(data):
     send_message("strava_athletes", strava_athletes)
 
 
+def get_contacts(data):
+    conn = get_db_connection()
+    request = '''SELECT *
+                 FROM contacts'''
+    contacts = conn.execute(request).fetchall()
+    conn.close()
+    contacts = select_to_dict_list(contacts)
+    send_message("contacts", contacts)
+
+
 def strava_athlete_to_contact(data):
     strava_athletes.people_contact_from_athlete(data)
 
@@ -150,6 +161,8 @@ class SocketIONameSpace(Namespace):
             get_events(data)
         if event_name == "get_strava_athletes":
             get_strava_athletes(data)
+        if event_name == "get_contacts":
+            get_contacts(data)
         if event_name == "create_contact_from_strava":
             strava_athlete_to_contact(data)
         elif event_name.startswith("set_cal_"):
