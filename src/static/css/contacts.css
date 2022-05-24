@@ -60,13 +60,11 @@
 }
 
 .contact-item {
-    border-radius: 4rem;
+    border-radius: 2rem;
     padding: 0.4rem;
     background-color: var(--front-color-2);
     box-shadow: 0px 0px 30px 0 rgba(0, 0, 0, 0.396);
     font-size: medium;
-    display: flex;
-    gap: 0.5rem;
     /* padding-right: 1rem; */
 }
 
@@ -88,21 +86,65 @@
   flex-grow: 1;
 }
 
-.contact-item img {
+.contact-item .header {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.contact-item .header img {
     width: 3rem;
     height: 3rem;
     clip-path: circle(50%);
 }
 
-.contact-item .full-name {
+.contact-item .header .full-name {
     font-size: x-large;
 }
 
-.contact-item a {
+.contact-item .header a {
     text-decoration: none;
 }
 
-.contact-item .people-name {
+.contact-item .header .people-name {
     font-size: medium;
     color: var(--font-color-2);
+}
+
+.contact-item .details {
+    margin-top: 0.4rem;
+    border-top: solid 0.1rem var(--font-color-1);
+    padding-top: 0.4rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.contact-item .details button {
+    background-color: transparent;
+    border: solid 0.2rem var(--back-color-1);
+    border-radius: 0.3rem;
+}
+
+.contact-item .details button:active {
+    background-color: var(--back-color-2);
+}
+
+.contact-item .details ul {
+    max-height: 10rem;
+    overflow: scroll;
+    padding: 0;
+}
+
+.contact-item .details .common-activity {
+    background-color: unset;
+    box-shadow: unset;
+}
+
+.contact-item .details .common-activity a {
+    text-decoration: unset;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.contact-item .details .common-activity:hover {
+    border-bottom: solid 0.1rem var(--font-color-1);
 }

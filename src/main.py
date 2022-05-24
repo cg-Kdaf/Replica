@@ -77,15 +77,34 @@ def get_events(data):
 
 def get_strava_athletes(data):
     conn = get_db_connection()
-    request = '''SELECT *,
-                 contacts.first_name AS contact_first_name,
-                 contacts.last_name AS contact_last_name
-                 FROM strava_athletes
-                 LEFT JOIN contacts ON strava_athletes.contact_id = contacts.id'''
+    request = '''SELECT strava_athletes.*,
+      contacts.first_name AS contact_first_name,
+      contacts.last_name AS contact_last_name,
+      "" AS activity_separator,
+      strava_activities_athletes.activity_id,
+      strava_activities.name,
+      strava_activities.distance,
+      strava_activities.total_elevation_gain,
+      strava_activities.type,
+      strava_activities.start_date
+      FROM strava_athletes
+      LEFT JOIN strava_activities_athletes ON strava_athletes.id = strava_activities_athletes.athlete_id
+      LEFT JOIN strava_activities ON strava_activities.id = strava_activities_athletes.activity_id
+      LEFT JOIN contacts ON strava_athletes.contact_id = contacts.id;'''
     strava_athletes = conn.execute(request).fetchall()
     conn.close()
     strava_athletes = select_to_dict_list(strava_athletes)
-    send_message("strava_athletes", strava_athletes)
+    activities_key_index = list(strava_athletes[0].keys()).index("activity_separator")
+    strava_athletes_ = {}
+    for strava_athlete in strava_athletes:
+        athlete_id = strava_athlete["id"]
+
+        if athlete_id in strava_athletes_.keys():
+            strava_athletes_[athlete_id]["activities"].append(dict(list(strava_athlete.items())[activities_key_index+1:]))
+        else:
+            strava_athletes_[athlete_id] = dict(list(strava_athlete.items())[:activities_key_index])
+            strava_athletes_[athlete_id]["activities"] = [dict(list(strava_athlete.items())[activities_key_index+1:])]
+    send_message("strava_athletes", list(strava_athletes_.values()))
 
 
 def get_contacts(data):
@@ -98,8 +117,29 @@ def get_contacts(data):
     send_message("contacts", contacts)
 
 
+def remove_contacts(data):
+    conn = get_db_connection()
+    request = f'''DELETE FROM contacts
+                  WHERE id = {data}'''
+    conn.execute(request).fetchall()
+    conn.commit()
+    conn.close()
+    get_contacts(None)
+
+
 def strava_athlete_to_contact(data):
-    strava_athletes.people_contact_from_athlete(data)
+    conn = get_db_connection()
+    strava_athletes.people_contact_from_athlete(conn, data)
+    request = f'''SELECT *,
+                 contacts.first_name AS contact_first_name,
+                 contacts.last_name AS contact_last_name
+                 FROM strava_athletes
+                 LEFT JOIN contacts ON strava_athletes.contact_id = contacts.id
+                 WHERE strava_athletes.id = {data}'''
+    contact = conn.execute(request).fetchall()
+    conn.close()
+    contact = select_to_dict_list(contact)
+    send_message("refresh", contact)
 
 
 def get_cal_list():
@@ -163,6 +203,8 @@ class SocketIONameSpace(Namespace):
             get_strava_athletes(data)
         if event_name == "get_contacts":
             get_contacts(data)
+        if event_name == "remove_contact":
+            remove_contacts(data)
         if event_name == "create_contact_from_strava":
             strava_athlete_to_contact(data)
         elif event_name.startswith("set_cal_"):

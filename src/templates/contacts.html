@@ -33,25 +33,49 @@
             <div class="spacer"></div>
         </div>
         <div class="people-contact contact-item hidden">
-            <img class="profile">
-            <p class="full-name"></p>
-            <div class="spacer"></div>
-            <p class="relation"></p>
-            <p class="age"></p>
-            <div>
-                <p class="phone-number"></p>
-                <p class="email"></p>
+            <div class="header">
+                <img class="profile">
+                <p class="full-name"></p>
+                <div class="spacer"></div>
+                <p class="relation"></p>
+                <p class="age"></p>
+                <div>
+                    <p class="phone-number"></p>
+                    <p class="email"></p>
+                </div>
+            </div>
+            <div class="details">
+                <button class="remove-contact">Remove contact</button>
+                <div class="spacer"></div>
+                <p></p>
             </div>
         </div>
         <div class="strava-contact contact-item hidden">
-            <img class="profile">
-            <div>
-                <a target="_blank" href=""><p class="full-name"></p></a>
-                <p class="people-name"></p>
+            <div class="header">
+                <img class="profile">
+                <div>
+                    <a target="_blank" href=""><p class="full-name"></p></a>
+                    <p class="people-name"></p>
+                </div>
+                <div class="spacer"></div>
+                <p class="location"></p>
+                <img src="{{url_for('static', filename= 'images/plus_icon.svg')}}" class="plus-btn hidden">
             </div>
-            <div class="spacer"></div>
-            <p class="location"></p>
-            <img src="{{url_for('static', filename= 'images/plus_icon.svg')}}" class="plus-btn hidden">
+            <div class="details">
+                <h2 class="data">Common activities</h2>
+                <ul>
+                    <li class="common-activity hidden">
+                        <a class="link" target="_blank">
+                            <p class="date">13 June 2022</p>
+                            <p class="type">Bike</p>
+                            <h3 class="name">Sortie du jour</h3>
+                            <div class="spacer"></div>
+                            <p class="distance">40.0 km</p>
+                            <p class="elevation">1,300 m D+</p>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
